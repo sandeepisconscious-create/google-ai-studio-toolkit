@@ -17,6 +17,15 @@
   // Dynamic model registry (No Auto)
   let currentModels = [...BASELINE_MODELS];
 
+  // Safety guard against "Extension context invalidated" when user reloads/updates extension
+  function isContextValid() {
+    try {
+      return typeof chrome !== 'undefined' && Boolean(chrome.runtime && chrome.runtime.id);
+    } catch (e) {
+      return false;
+    }
+  }
+
   // Remembered active model (persisted in chrome.storage.local)
   let activeModel = 'Gemini 3.8 Flash';
   let isCapturing = false;
@@ -24,49 +33,58 @@
   let hideSuggestionsEnabled = true;
 
   // Load preferences from storage
-  if (chrome.storage && chrome.storage.local) {
-    chrome.storage.local.get(['asc_enter_to_send', 'asc_hide_suggestions'], (res) => {
-      enterToSendEnabled = Boolean(res && res.asc_enter_to_send);
-      hideSuggestionsEnabled = res && res.asc_hide_suggestions !== undefined ? Boolean(res.asc_hide_suggestions) : true;
-      scanAndHideSuggestions();
-    });
+  if (isContextValid() && chrome.storage && chrome.storage.local) {
+    try {
+      chrome.storage.local.get(['asc_enter_to_send', 'asc_hide_suggestions'], (res) => {
+        if (!isContextValid()) return;
+        enterToSendEnabled = Boolean(res && res.asc_enter_to_send);
+        hideSuggestionsEnabled = res && res.asc_hide_suggestions !== undefined ? Boolean(res.asc_hide_suggestions) : true;
+        scanAndHideSuggestions();
+      });
+    } catch (e) {}
   }
 
-  if (chrome.storage && chrome.storage.onChanged) {
-    chrome.storage.onChanged.addListener((changes) => {
-      if (changes.asc_enter_to_send) {
-        enterToSendEnabled = Boolean(changes.asc_enter_to_send.newValue);
-      }
-      if (changes.asc_hide_suggestions !== undefined) {
-        hideSuggestionsEnabled = Boolean(changes.asc_hide_suggestions.newValue);
-        scanAndHideSuggestions();
-      }
-      if (changes.asc_selected_model && changes.asc_selected_model.newValue) {
-        const newModel = changes.asc_selected_model.newValue;
-        if (newModel !== activeModel) {
-          activeModel = newModel;
-          updatePillLabel();
-          window.postMessage({ type: 'ASC_SET_ACTIVE_MODEL', model: activeModel }, '*');
-          const menu = document.getElementById('asc-model-dropdown-menu');
-          if (menu) renderModelMenuItems(menu);
+  if (isContextValid() && chrome.storage && chrome.storage.onChanged) {
+    try {
+      chrome.storage.onChanged.addListener((changes) => {
+        if (!isContextValid()) return;
+        if (changes.asc_enter_to_send) {
+          enterToSendEnabled = Boolean(changes.asc_enter_to_send.newValue);
         }
-      }
-    });
+        if (changes.asc_hide_suggestions !== undefined) {
+          hideSuggestionsEnabled = Boolean(changes.asc_hide_suggestions.newValue);
+          scanAndHideSuggestions();
+        }
+        if (changes.asc_selected_model && changes.asc_selected_model.newValue) {
+          const newModel = changes.asc_selected_model.newValue;
+          if (newModel !== activeModel) {
+            activeModel = newModel;
+            updatePillLabel();
+            window.postMessage({ type: 'ASC_SET_ACTIVE_MODEL', model: activeModel }, '*');
+            const menu = document.getElementById('asc-model-dropdown-menu');
+            if (menu) renderModelMenuItems(menu);
+          }
+        }
+      });
+    } catch (e) {}
   }
 
-  if (chrome.runtime && chrome.runtime.onMessage) {
-    chrome.runtime.onMessage.addListener((msg) => {
-      if (msg && msg.type === 'ASC_ENTER_TO_SEND_CHANGED') {
-        enterToSendEnabled = Boolean(msg.enabled);
-      }
-      if (msg && msg.type === 'ASC_HIDE_SUGGESTIONS_CHANGED') {
-        hideSuggestionsEnabled = Boolean(msg.enabled);
-        scanAndHideSuggestions();
-      }
-      if (msg && msg.action === 'trigger_capture') {
-        captureAppletScreenshot();
-      }
-    });
+  if (isContextValid() && chrome.runtime && chrome.runtime.onMessage) {
+    try {
+      chrome.runtime.onMessage.addListener((msg) => {
+        if (!isContextValid()) return;
+        if (msg && msg.type === 'ASC_ENTER_TO_SEND_CHANGED') {
+          enterToSendEnabled = Boolean(msg.enabled);
+        }
+        if (msg && msg.type === 'ASC_HIDE_SUGGESTIONS_CHANGED') {
+          hideSuggestionsEnabled = Boolean(msg.enabled);
+          scanAndHideSuggestions();
+        }
+        if (msg && msg.action === 'trigger_capture') {
+          captureAppletScreenshot();
+        }
+      });
+    } catch (e) {}
   }
 
   // --- 1. Dynamic Model Discovery & Normalization ---
@@ -128,9 +146,14 @@
   }
 
   function saveDynamicModels() {
-    if (chrome.storage && chrome.storage.local) {
-      chrome.storage.local.set({ asc_dynamic_models: currentModels });
-    }
+    if (!isContextValid()) return;
+    try {
+      if (chrome.storage && chrome.storage.local) {
+        chrome.storage.local.set({ asc_dynamic_models: currentModels }, () => {
+          if (chrome.runtime?.lastError) { /* ignore */ }
+        });
+      }
+    } catch (e) {}
   }
 
   function mergeDiscoveredModels(modelsList) {
@@ -199,6 +222,7 @@
 
   // Tier 2: Network / Interceptor message listener
   window.addEventListener('message', (event) => {
+    if (!isContextValid()) return;
     if (event.source !== window) return;
     if (event.data && event.data.type === 'ASC_MODELS_DISCOVERED' && Array.isArray(event.data.models)) {
       mergeDiscoveredModels(event.data.models);
@@ -240,37 +264,44 @@
   const CURRENT_CACHE_VERSION = 'v1.6.4';
 
   function loadSavedModel() {
-    if (!chrome.storage || !chrome.storage.local) return;
+    if (!isContextValid()) return;
+    try {
+      if (!chrome.storage || !chrome.storage.local) return;
 
-    chrome.storage.local.get(['asc_cache_ver', 'asc_selected_model', 'asc_chat_model', 'asc_dynamic_models'], (res) => {
-      // Purge stale duplicate-riddled cache from previous versions
-      if (!res || res.asc_cache_ver !== CURRENT_CACHE_VERSION) {
-        currentModels = [...BASELINE_MODELS];
-        chrome.storage.local.set({
-          asc_cache_ver: CURRENT_CACHE_VERSION,
-          asc_dynamic_models: currentModels
-        });
-      } else if (res.asc_dynamic_models && Array.isArray(res.asc_dynamic_models) && res.asc_dynamic_models.length > 0) {
-        mergeDiscoveredModels(res.asc_dynamic_models);
-      }
+      chrome.storage.local.get(['asc_cache_ver', 'asc_selected_model', 'asc_chat_model', 'asc_dynamic_models'], (res) => {
+        if (!isContextValid()) return;
 
-      const rawSaved = (res && (res.asc_selected_model || res.asc_chat_model)) || '';
-      const normalizedSaved = normalizeModelEntry(rawSaved);
+        // Purge stale duplicate-riddled cache from previous versions
+        if (!res || res.asc_cache_ver !== CURRENT_CACHE_VERSION) {
+          currentModels = [...BASELINE_MODELS];
+          try {
+            chrome.storage.local.set({
+              asc_cache_ver: CURRENT_CACHE_VERSION,
+              asc_dynamic_models: currentModels
+            });
+          } catch (e) {}
+        } else if (res.asc_dynamic_models && Array.isArray(res.asc_dynamic_models) && res.asc_dynamic_models.length > 0) {
+          mergeDiscoveredModels(res.asc_dynamic_models);
+        }
 
-      if (normalizedSaved && !normalizedSaved.name.toLowerCase().startsWith('auto')) {
-        activeModel = normalizedSaved.name;
-      } else {
-        activeModel = 'Gemini 3.8 Flash';
-      }
+        const rawSaved = (res && (res.asc_selected_model || res.asc_chat_model)) || '';
+        const normalizedSaved = normalizeModelEntry(rawSaved);
 
-      updatePillLabel();
+        if (normalizedSaved && !normalizedSaved.name.toLowerCase().startsWith('auto')) {
+          activeModel = normalizedSaved.name;
+        } else {
+          activeModel = 'Gemini 3.8 Flash';
+        }
 
-      // Immediately inform network interceptor of active model
-      window.postMessage({
-        type: 'ASC_SET_ACTIVE_MODEL',
-        model: activeModel
-      }, '*');
-    });
+        updatePillLabel();
+
+        // Immediately inform network interceptor of active model
+        window.postMessage({
+          type: 'ASC_SET_ACTIVE_MODEL',
+          model: activeModel
+        }, '*');
+      });
+    } catch (e) {}
   }
 
   function applyModelSelection(modelName) {
@@ -280,11 +311,15 @@
     updatePillLabel();
 
     // Persist permanently in storage
-    if (chrome.storage && chrome.storage.local) {
-      chrome.storage.local.set({
-        asc_selected_model: modelName,
-        asc_chat_model: modelName
-      });
+    if (isContextValid()) {
+      try {
+        if (chrome.storage && chrome.storage.local) {
+          chrome.storage.local.set({
+            asc_selected_model: modelName,
+            asc_chat_model: modelName
+          });
+        }
+      } catch (e) {}
     }
 
     // Sync with Google AI Studio's native chat settings
@@ -768,21 +803,34 @@
       height: Math.round(rect.height * dpr)
     };
 
-    chrome.runtime.sendMessage(
-      { action: 'capture_visible_tab' },
-      (response) => {
-        if (!response || !response.success || !response.dataUrl) {
-          isCapturing = false;
-          console.warn('[AI Studio Toolkit] Screenshot capture failed:', response ? response.error : 'No response');
-          return;
-        }
+    if (!isContextValid()) {
+      isCapturing = false;
+      return;
+    }
 
-        cropImageDataUrl(response.dataUrl, cropArea, (croppedDataUrl) => {
-          isCapturing = false;
-          processAndInsertSingleScreenshot(croppedDataUrl);
-        });
-      }
-    );
+    try {
+      chrome.runtime.sendMessage(
+        { action: 'capture_visible_tab' },
+        (response) => {
+          if (!isContextValid()) {
+            isCapturing = false;
+            return;
+          }
+          if (!response || !response.success || !response.dataUrl) {
+            isCapturing = false;
+            console.warn('[AI Studio Toolkit] Screenshot capture failed:', response ? response.error : 'No response');
+            return;
+          }
+
+          cropImageDataUrl(response.dataUrl, cropArea, (croppedDataUrl) => {
+            isCapturing = false;
+            processAndInsertSingleScreenshot(croppedDataUrl);
+          });
+        }
+      );
+    } catch (e) {
+      isCapturing = false;
+    }
   }
 
   function showCaptureFlash(el) {
@@ -1037,8 +1085,27 @@
     }
   }
 
-  // Continuous Setup
-  const mainObserver = new MutationObserver(() => {
+  // Continuous Setup with context teardown
+  let mainObserver = null;
+  let pollInterval = null;
+
+  function teardownIfInvalid() {
+    if (!isContextValid()) {
+      if (mainObserver) {
+        try { mainObserver.disconnect(); } catch (e) {}
+        mainObserver = null;
+      }
+      if (pollInterval) {
+        clearInterval(pollInterval);
+        pollInterval = null;
+      }
+      return true;
+    }
+    return false;
+  }
+
+  mainObserver = new MutationObserver(() => {
+    if (teardownIfInvalid()) return;
     setupPromptBar();
     scanAndHideSuggestions();
   });
@@ -1048,13 +1115,16 @@
     subtree: true
   });
 
-  setInterval(() => {
+  pollInterval = setInterval(() => {
+    if (teardownIfInvalid()) return;
     setupPromptBar();
     scanAndHideSuggestions();
   }, 1000);
 
   // Initialize saved model and suggestions on startup
-  loadSavedModel();
-  scanAndHideSuggestions();
+  if (isContextValid()) {
+    loadSavedModel();
+    scanAndHideSuggestions();
+  }
 
 })();
