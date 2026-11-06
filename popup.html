@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Google AI Studio Toolkit</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-box">
+    <!-- Header -->
+    <div class="popup-header">
+      <div class="popup-title-group">
+        <svg viewBox="0 0 24 24" class="popup-icon">
+          <circle cx="12" cy="12" r="10" fill="#252628" stroke="#9aa0a6" stroke-width="1.5"/>
+          <path d="M12 15.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4z" fill="#e3e3e3"/>
+          <path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z" fill="#9aa0a6"/>
+        </svg>
+        <span class="popup-title">Google AI Studio Toolkit</span>
+      </div>
+      <span class="status-pill" id="status-pill">Checking...</span>
+    </div>
+
+    <!-- Active State on Google AI Studio -->
+    <div class="state-container" id="state-active" style="display: none;">
+      <div class="info-card">
+        <div class="info-item">
+          <div>
+            <div class="info-heading">Applet Screenshot</div>
+            <div class="info-desc">Click the camera button in the prompt bar or press <kbd>Option</kbd> + <kbd>S</kbd></div>
+          </div>
+        </div>
+        <div class="info-item">
+          <div>
+            <div class="info-heading">Model Switcher & Router</div>
+            <div class="info-desc">Switch models and manage auto-dispatch right from the prompt bar</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Inactive State (when not on aistudio.google.com) -->
+    <div class="state-container" id="state-inactive" style="display: none;">
+      <div class="inactive-card">
+        <div class="inactive-icon">
+          <svg viewBox="0 0 24 24">
+            <path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/>
+          </svg>
+        </div>
+        <div class="inactive-title">Toolkit Inactive</div>
+        <div class="inactive-desc">This toolkit works inside Google AI Studio. Open a project to activate prompt tools.</div>
+        <button type="button" class="open-studio-btn" id="open-studio-btn">
+          Open Google AI Studio
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

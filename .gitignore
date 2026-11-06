@@ -1,0 +1,10 @@
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+*.pem
+*.crx
+node_modules/
+dist/
+.vscode/
+.idea/

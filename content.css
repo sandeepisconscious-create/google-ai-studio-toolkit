@@ -1,0 +1,300 @@
+/* AI Studio Companion - Clean Monochromatic Styles */
+
+/* Horizontal flex container for (+) and camera button */
+.asc-left-group {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 8px !important;
+  width: auto !important;
+  max-width: none !important;
+  height: 36px !important;
+  vertical-align: middle !important;
+}
+
+/* Circular Camera Capture Button */
+.asc-capture-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  min-height: 32px !important;
+  max-width: 32px !important;
+  max-height: 32px !important;
+  border-radius: 50% !important;
+  background-color: transparent !important;
+  border: 1px solid #3c4043 !important;
+  color: #e3e3e3 !important;
+  cursor: pointer !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  flex-shrink: 0 !important;
+  transition: background-color 0.15s ease, border-color 0.15s ease !important;
+  box-sizing: border-box !important;
+  vertical-align: middle !important;
+  outline: none !important;
+  position: relative !important;
+}
+
+.asc-capture-btn:hover {
+  background-color: #2d2e30 !important;
+  border-color: #5f6368 !important;
+  color: #ffffff !important;
+}
+
+.asc-capture-btn:active {
+  background-color: #1e1f20 !important;
+}
+
+.asc-capture-btn svg {
+  width: 16px !important;
+  height: 16px !important;
+  fill: currentColor !important;
+  pointer-events: none !important;
+}
+
+/* Tooltip */
+.asc-capture-btn::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #1a1b1c;
+  color: #e3e3e3;
+  padding: 5px 9px;
+  font-size: 11px;
+  font-family: 'Google Sans', Roboto, sans-serif;
+  border-radius: 6px;
+  border: 1px solid #3c4043;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  z-index: 999999;
+}
+
+.asc-capture-btn:hover::after {
+  opacity: 1;
+}
+
+/* Monochromatic Model Switcher Pill */
+.asc-model-btn-wrap {
+  position: relative !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  margin-right: 8px !important;
+  margin-left: 4px !important;
+  vertical-align: middle !important;
+  z-index: 10000 !important;
+}
+
+.asc-model-pill {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  height: 32px !important;
+  padding: 0 12px !important;
+  background-color: transparent !important;
+  border: 1px solid #3c4043 !important;
+  border-radius: 16px !important;
+  color: #e3e3e3 !important;
+  font-family: 'Google Sans', Roboto, -apple-system, BlinkMacSystemFont, sans-serif !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  transition: background-color 0.15s ease, border-color 0.15s ease !important;
+  user-select: none !important;
+  outline: none !important;
+  white-space: nowrap !important;
+  vertical-align: middle !important;
+  box-sizing: border-box !important;
+}
+
+.asc-model-pill:hover {
+  background-color: #2d2e30 !important;
+  border-color: #5f6368 !important;
+  color: #ffffff !important;
+}
+
+.asc-model-pill svg {
+  pointer-events: none !important;
+  fill: #c4c7c5 !important;
+}
+
+/* Clean Minimal Model Dropdown Menu */
+.asc-model-menu {
+  position: absolute !important;
+  bottom: calc(100% + 8px) !important;
+  right: 0 !important;
+  width: 260px !important;
+  background-color: #18191a !important;
+  border: 1px solid #3c4043 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.7) !important;
+  padding: 4px 0 !important;
+  z-index: 1000000 !important;
+  font-family: 'Google Sans', Roboto, -apple-system, BlinkMacSystemFont, sans-serif !important;
+  display: none;
+  animation: ascMenuFadeIn 0.12s ease-out;
+}
+
+.asc-model-menu.asc-show {
+  display: block !important;
+}
+
+.asc-model-menu-header {
+  padding: 8px 14px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #8e918f;
+  border-bottom: 1px solid #2b2c2e;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.asc-reset-timer {
+  font-size: 11px;
+  color: #8e918f;
+  font-variant-numeric: tabular-nums;
+}
+
+.asc-model-menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 14px;
+  font-size: 13px;
+  color: #e3e3e3;
+  cursor: pointer;
+  transition: background-color 0.1s;
+}
+
+.asc-model-menu-item:hover {
+  background-color: #252628;
+  color: #ffffff;
+}
+
+.asc-model-menu-item.active {
+  background-color: #2b2c2f;
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.asc-model-name-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.asc-mono-tag {
+  font-size: 10px;
+  background-color: #252628;
+  color: #9aa0a6;
+  border: 1px solid #3c4043;
+  padding: 1px 6px;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.asc-usage-meta {
+  font-size: 11px;
+  color: #8e918f;
+  font-variant-numeric: tabular-nums;
+}
+
+.asc-menu-divider {
+  height: 1px;
+  background-color: #2b2c2e;
+  margin: 4px 0;
+}
+
+/* Flash feedback over applet */
+.asc-flash-overlay {
+  position: absolute;
+  pointer-events: none;
+  border: 2px solid #e3e3e3;
+  background-color: rgba(255, 255, 255, 0.12);
+  z-index: 999999;
+  border-radius: 8px;
+  box-sizing: border-box;
+  transition: opacity 0.4s ease-out;
+}
+
+/* Toast Feedback - Anchored exactly 6px above the prompt box */
+.asc-toast {
+  position: fixed;
+  background-color: #18191a;
+  color: #e3e3e3;
+  border: 1px solid #3c4043;
+  border-radius: 8px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.65);
+  z-index: 1000000;
+  font-family: 'Google Sans', Roboto, sans-serif;
+  font-size: 12px;
+  animation: ascToastIn 0.15s ease-out;
+  pointer-events: auto;
+}
+
+.asc-toast-thumb {
+  width: 32px;
+  height: 32px;
+  border-radius: 5px;
+  object-fit: cover;
+  border: 1px solid #3c4043;
+  background: #000;
+  flex-shrink: 0;
+}
+
+.asc-toast-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.asc-toast-title {
+  font-weight: 600;
+  color: #ffffff;
+  font-size: 12px;
+}
+
+.asc-toast-subtitle {
+  font-size: 11px;
+  color: #9aa0a6;
+}
+
+.asc-toast-btn {
+  background: #252628;
+  border: 1px solid #3c4043;
+  color: #e3e3e3;
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-left: 4px;
+  flex-shrink: 0;
+}
+
+.asc-toast-btn:hover {
+  background: #37393b;
+  color: #ffffff;
+}
+
+@keyframes ascMenuFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes ascToastIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
