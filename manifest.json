@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Google AI Studio Toolkit",
-  "version": "1.8.0",
-  "description": "Productivity toolkit for Google AI Studio: Applet capture, in-prompt model switching, Enter to Send toggle, and dynamic model discovery.",
+  "version": "1.9.0",
+  "description": "Productivity toolkit for Google AI Studio: Applet capture, in-prompt model switching, hide suggestions, Enter to Send toggle, and dynamic model discovery.",
   "permissions": [
     "activeTab",
     "storage",

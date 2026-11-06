@@ -111,6 +111,12 @@ kbd {
   gap: 10px;
 }
 
+.toggle-divider {
+  height: 1px;
+  background-color: #2b2c2e;
+  margin: 10px 0;
+}
+
 .toggle-info {
   display: flex;
   flex-direction: column;

@@ -5,8 +5,8 @@
 <h1 align="center">Google AI Studio Toolkit</h1>
 
 <p align="center">
-  <a href="https://github.com/sandeepisconscious-create/google-ai-studio-toolkit/releases/download/v1.8.0/google-ai-studio-toolkit-v1.8.0.zip">
-    <img src="https://img.shields.io/badge/⬇%EF%B8%8F_Download_Extension_(v1.8.0)-ZIP-2563EB?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Download Extension ZIP">
+  <a href="https://github.com/sandeepisconscious-create/google-ai-studio-toolkit/releases/download/v1.9.0/google-ai-studio-toolkit-v1.9.0.zip">
+    <img src="https://img.shields.io/badge/⬇%EF%B8%8F_Download_Extension_(v1.9.0)-ZIP-2563EB?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Download Extension ZIP">
   </a>
 </p>
 
@@ -48,12 +48,17 @@ It adds one-click live applet screenshot capture directly into the prompt input,
 - **Alias & Duplicate Filtering**: Automatically drops redundant floating aliases (`Gemini Flash Latest`, `Default (...)`) and strips UI badge text (`Paid`, `Beta`), keeping the dropdown clean and distinct.
 - **Version-Aware Sorting**: New models automatically sort to the top by generation and version number.
 
-### 4. ⌨️ Enter to Send (Toggleable)
+### 4. 🚫 Hide Suggestions (Toggleable)
+- **Distraction-Free Prompting**: Automatically hide the large suggestion cards that repeatedly pop up above the prompt input.
+- **Instant Control**: Easily toggle suggestions on or off anytime via the extension popup settings.
+- **Clean Workspace**: Keeps your chat interface uncluttered and focused purely on your prompt and model settings.
+
+### 5. ⌨️ Enter to Send (Toggleable)
 - **Fast Messaging Mode**: Choose whether pressing <kbd>Enter</kbd> sends your prompt immediately (<kbd>Shift</kbd>+<kbd>Enter</kbd> for newline) or keeps Google AI Studio's default behavior (<kbd>Enter</kbd> inserts a newline).
-- **Dual Controls**: Toggle on/off with a single click inside the prompt bar dropdown or from the extension toolbar popup.
+- **Extension Settings**: Easily toggle on/off from the extension toolbar popup without cluttering the in-prompt model switcher.
 - **Safe Defaults**: Defaults to Google AI Studio's standard multiline behavior until you choose to enable it.
 
-### 5. 🎨 Monochromatic & Native Interface
+### 6. 🎨 Monochromatic & Native Interface
 - Styled with dark monochromatic tones (`#18191a`, `#282a2c`, `#3c4043`) that seamlessly blend with Google AI Studio's native UI.
 - Zero intrusive pop-overs, floating toasts, or layout shifts over your prompt box.
 
@@ -64,8 +69,8 @@ It adds one-click live applet screenshot capture directly into the prompt input,
 Anyone can install and run this extension locally in Google Chrome, Brave, Edge, or any Chromium browser.
 
 ### Option A: Direct Download ZIP (Recommended)
-1. Click the **[⬇️ Download Extension ZIP](https://github.com/sandeepisconscious-create/google-ai-studio-toolkit/releases/download/v1.8.0/google-ai-studio-toolkit-v1.8.0.zip)** button.
-2. Unzip `google-ai-studio-toolkit-v1.8.0.zip` to a folder on your computer.
+1. Click the **[⬇️ Download Extension ZIP](https://github.com/sandeepisconscious-create/google-ai-studio-toolkit/releases/download/v1.9.0/google-ai-studio-toolkit-v1.9.0.zip)** button.
+2. Unzip `google-ai-studio-toolkit-v1.9.0.zip` to a folder on your computer.
 
 ### Option B: Clone with Git
 ```bash

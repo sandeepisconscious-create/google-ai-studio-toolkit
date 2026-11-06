@@ -332,6 +332,19 @@
   border: 1px solid #3c4043 !important;
 }
 
+/* Hide Prompt Suggestions when active */
+body.asc-hide-suggestions ms-prompt-suggestions,
+body.asc-hide-suggestions ms-suggestions,
+body.asc-hide-suggestions [class*="prompt-suggestions" i],
+body.asc-hide-suggestions [class*="suggestion-container" i],
+body.asc-hide-suggestions [class*="suggestions-container" i],
+body.asc-hide-suggestions [class*="suggestions-wrapper" i],
+body.asc-hide-suggestions [class*="suggestions-list" i],
+body.asc-hide-suggestions [data-test-id*="suggestion" i],
+body.asc-hide-suggestions .asc-suggestion-hidden {
+  display: none !important;
+}
+
 @keyframes ascMenuFadeIn {
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }

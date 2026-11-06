@@ -21,11 +21,14 @@
   let activeModel = 'Gemini 3.8 Flash';
   let isCapturing = false;
   let enterToSendEnabled = false;
+  let hideSuggestionsEnabled = true;
 
-  // Load Enter to Send preference
+  // Load preferences from storage
   if (chrome.storage && chrome.storage.local) {
-    chrome.storage.local.get(['asc_enter_to_send'], (res) => {
+    chrome.storage.local.get(['asc_enter_to_send', 'asc_hide_suggestions'], (res) => {
       enterToSendEnabled = Boolean(res && res.asc_enter_to_send);
+      hideSuggestionsEnabled = res && res.asc_hide_suggestions !== undefined ? Boolean(res.asc_hide_suggestions) : true;
+      scanAndHideSuggestions();
     });
   }
 
@@ -33,8 +36,10 @@
     chrome.storage.onChanged.addListener((changes) => {
       if (changes.asc_enter_to_send) {
         enterToSendEnabled = Boolean(changes.asc_enter_to_send.newValue);
-        const menu = document.getElementById('asc-model-dropdown-menu');
-        if (menu) renderModelMenuItems(menu);
+      }
+      if (changes.asc_hide_suggestions !== undefined) {
+        hideSuggestionsEnabled = Boolean(changes.asc_hide_suggestions.newValue);
+        scanAndHideSuggestions();
       }
       if (changes.asc_selected_model && changes.asc_selected_model.newValue) {
         const newModel = changes.asc_selected_model.newValue;
@@ -53,8 +58,10 @@
     chrome.runtime.onMessage.addListener((msg) => {
       if (msg && msg.type === 'ASC_ENTER_TO_SEND_CHANGED') {
         enterToSendEnabled = Boolean(msg.enabled);
-        const menu = document.getElementById('asc-model-dropdown-menu');
-        if (menu) renderModelMenuItems(menu);
+      }
+      if (msg && msg.type === 'ASC_HIDE_SUGGESTIONS_CHANGED') {
+        hideSuggestionsEnabled = Boolean(msg.enabled);
+        scanAndHideSuggestions();
       }
       if (msg && msg.action === 'trigger_capture') {
         captureAppletScreenshot();
@@ -697,34 +704,6 @@
 
       menu.appendChild(item);
     });
-
-    // Divider
-    const divider = document.createElement('div');
-    divider.className = 'asc-menu-divider';
-    menu.appendChild(divider);
-
-    // Enter to Send Toggle Row
-    const enterRow = document.createElement('div');
-    enterRow.className = 'asc-enter-to-send-row';
-    enterRow.title = enterToSendEnabled
-      ? 'Press Enter to send (Click to disable)'
-      : 'Press Enter for newline (Click to enable Enter to Send)';
-    enterRow.innerHTML = `
-      <span>Enter to Send</span>
-      <span class="asc-toggle-state ${enterToSendEnabled ? 'on' : 'off'}">${enterToSendEnabled ? 'ON' : 'OFF'}</span>
-    `;
-
-    enterRow.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      enterToSendEnabled = !enterToSendEnabled;
-      if (chrome.storage && chrome.storage.local) {
-        chrome.storage.local.set({ asc_enter_to_send: enterToSendEnabled });
-      }
-      renderModelMenuItems(menu);
-    });
-
-    menu.appendChild(enterRow);
   }
 
   function getShortName(fullName) {
@@ -962,9 +941,106 @@
     }
   });
 
+  // --- 7. Hide Suggestions Scanner ---
+  function scanAndHideSuggestions() {
+    if (!hideSuggestionsEnabled) {
+      document.body.classList.remove('asc-hide-suggestions');
+      document.querySelectorAll('.asc-suggestion-hidden').forEach((el) => {
+        el.classList.remove('asc-suggestion-hidden');
+        el.style.removeProperty('display');
+      });
+      return;
+    }
+
+    document.body.classList.add('asc-hide-suggestions');
+
+    // 1. Text-based discovery: Find "Suggestions" header
+    const candidateHeaders = Array.from(document.querySelectorAll('*')).filter((el) => {
+      if (el.closest('#asc-model-pill-wrap') || el.id === 'asc-prompt-camera-btn') return false;
+      const t = (el.textContent || '').trim();
+      return t === 'Suggestions' && el.children.length === 0;
+    });
+
+    for (const header of candidateHeaders) {
+      let curr = header.parentElement;
+      let target = null;
+      let depth = 0;
+
+      while (curr && curr !== document.body && depth < 8) {
+        // Never hide the prompt textarea or toolkit buttons
+        if (curr.querySelector('textarea, [contenteditable="true"], [role="textbox"], #asc-prompt-camera-btn, #asc-model-pill-wrap')) {
+          break;
+        }
+
+        const text = curr.textContent || '';
+        const hasCards = (curr.querySelectorAll('button, [role="button"]').length >= 2) ||
+                         text.includes('AI Features') ||
+                         text.includes('New feature');
+        const hasClose = curr.querySelector('button[aria-label*="close" i], button[aria-label*="dismiss" i], svg path[d*="19 6.41"], svg path[d*="M19 6.41"], svg path[d*="M18 6L6 18"]');
+
+        if (hasCards || hasClose) {
+          target = curr;
+        }
+        curr = curr.parentElement;
+        depth++;
+      }
+
+      if (target) {
+        target.classList.add('asc-suggestion-hidden');
+        target.style.setProperty('display', 'none', 'important');
+      }
+    }
+
+    // 2. Class and attribute-based discovery
+    const selectors = [
+      'ms-prompt-suggestions',
+      'ms-suggestions',
+      '[data-test-id*="suggestion" i]',
+      '[aria-label*="suggestions" i]',
+      '[class*="prompt-suggestions" i]',
+      '[class*="suggestion-container" i]',
+      '[class*="suggestions-container" i]',
+      '[class*="suggestions-wrapper" i]',
+      '[class*="suggestions-list" i]'
+    ];
+    for (const sel of selectors) {
+      document.querySelectorAll(sel).forEach((el) => {
+        if (el.closest('#asc-model-pill-wrap') || el.id === 'asc-prompt-camera-btn') return;
+        if (el.querySelector('textarea, [contenteditable="true"], [role="textbox"]')) return;
+        el.classList.add('asc-suggestion-hidden');
+        el.style.setProperty('display', 'none', 'important');
+      });
+    }
+
+    // 3. Chip-based discovery
+    const chips = Array.from(document.querySelectorAll('*')).filter((el) => {
+      if (el.children.length > 0) return false;
+      const t = (el.textContent || '').trim();
+      return t === 'AI Features' || t === 'New feature';
+    });
+    for (const chip of chips) {
+      let p = chip.parentElement;
+      let box = null;
+      let depth = 0;
+      while (p && p !== document.body && depth < 6) {
+        if (p.querySelector('textarea, [contenteditable="true"], [role="textbox"]')) break;
+        if ((p.textContent || '').includes('Suggestions')) {
+          box = p;
+        }
+        p = p.parentElement;
+        depth++;
+      }
+      if (box) {
+        box.classList.add('asc-suggestion-hidden');
+        box.style.setProperty('display', 'none', 'important');
+      }
+    }
+  }
+
   // Continuous Setup
   const mainObserver = new MutationObserver(() => {
     setupPromptBar();
+    scanAndHideSuggestions();
   });
 
   mainObserver.observe(document.body, {
@@ -974,9 +1050,11 @@
 
   setInterval(() => {
     setupPromptBar();
+    scanAndHideSuggestions();
   }, 1000);
 
-  // Initialize saved model on startup
+  // Initialize saved model and suggestions on startup
   loadSavedModel();
+  scanAndHideSuggestions();
 
 })();
