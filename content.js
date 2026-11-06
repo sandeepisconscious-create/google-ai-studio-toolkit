@@ -209,39 +209,165 @@
   function syncWithAIStudioNativeDropdown(targetModelName) {
     if (!targetModelName) return;
 
-    const allLabels = Array.from(document.querySelectorAll('*')).filter(el => {
-      return el.children.length === 0 && (el.textContent || '').trim().includes('Select model to use in Chat');
-    });
+    // 1. Immediately inform the main-world network interceptor
+    window.postMessage({
+      type: 'ASC_SET_ACTIVE_MODEL',
+      model: targetModelName
+    }, '*');
 
-    for (const label of allLabels) {
-      const container = label.parentElement;
-      if (!container) continue;
+    // 2. Programmatically select in Google AI Studio's native settings UI
+    attemptNativeDropdownSelection(targetModelName);
+  }
 
-      const dropdown = container.querySelector('select, [role="combobox"], [role="listbox"], button');
-      if (dropdown) {
-        if (dropdown.tagName === 'SELECT') {
-          for (const opt of dropdown.options) {
-            if (opt.text.toLowerCase().includes(targetModelName.toLowerCase())) {
-              dropdown.value = opt.value;
-              dropdown.dispatchEvent(new Event('change', { bubbles: true }));
-              return;
-            }
-          }
+  function attemptNativeDropdownSelection(targetModelName) {
+    // Check if "Select model to use in Chat" is already in the DOM
+    const existingLabel = findLabelInDOM('Select model to use in Chat');
+    if (existingLabel) {
+      selectOptionUnderLabel(existingLabel, targetModelName);
+      return;
+    }
+
+    // If drawer is closed, open the Settings / Project drawer
+    const settingsBtn = findSettingsDrawerButton();
+    if (!settingsBtn) return;
+
+    settingsBtn.click();
+
+    setTimeout(() => {
+      // Switch to Chat tab in drawer if needed
+      const chatTab = findChatTabButton();
+      if (chatTab) chatTab.click();
+
+      setTimeout(() => {
+        const chatLabel = findLabelInDOM('Select model to use in Chat');
+        if (chatLabel) {
+          selectOptionUnderLabel(chatLabel, targetModelName, () => {
+            closeSettingsDrawer();
+          });
         } else {
-          dropdown.click();
-          setTimeout(() => {
-            const options = Array.from(document.querySelectorAll('[role="option"], li, mat-option, div'));
-            for (const opt of options) {
-              if (opt.textContent && opt.textContent.trim().toLowerCase().includes(targetModelName.toLowerCase())) {
-                opt.click();
-                return;
-              }
-            }
-            document.body.click();
-          }, 150);
-          return;
+          closeSettingsDrawer();
+        }
+      }, 120);
+    }, 120);
+  }
+
+  function findLabelInDOM(text) {
+    const all = document.querySelectorAll('*');
+    for (const el of all) {
+      if (el.closest('#asc-model-pill-wrap')) continue;
+      if (el.children.length === 0 && (el.textContent || '').trim().includes(text)) {
+        return el;
+      }
+    }
+    return null;
+  }
+
+  function findSettingsDrawerButton() {
+    const buttons = Array.from(document.querySelectorAll('button, [role="button"]'));
+    for (const b of buttons) {
+      if (b.closest('#asc-model-pill-wrap') || b.id === 'asc-prompt-camera-btn') continue;
+      const aria = (b.getAttribute('aria-label') || '').toLowerCase();
+      const title = (b.getAttribute('title') || '').toLowerCase();
+      if (aria.includes('setting') || title.includes('setting') || aria.includes('project') || title.includes('project')) {
+        return b;
+      }
+
+      const svg = b.querySelector('svg');
+      if (svg) {
+        const path = b.querySelector('path');
+        const d = path ? path.getAttribute('d') : '';
+        if (d && (d.includes('M19.14') || d.includes('M12 15.5') || d.includes('M3 17v2h6') || d.includes('19.43 12.97'))) {
+          return b;
         }
       }
+    }
+
+    for (const b of buttons) {
+      const text = (b.textContent || '').trim().toLowerCase();
+      if (['publish', 'share', 'github', 'versions', 'integrations'].includes(text)) {
+        return b;
+      }
+    }
+    return null;
+  }
+
+  function findChatTabButton() {
+    const buttons = Array.from(document.querySelectorAll('button, [role="tab"], div, span'));
+    for (const b of buttons) {
+      if (b.closest('#asc-model-pill-wrap')) continue;
+      const text = (b.textContent || '').trim();
+      if (/^(•\s*)?Chat$/i.test(text)) {
+        return b.closest('button, [role="tab"]') || b;
+      }
+    }
+    return null;
+  }
+
+  function selectOptionUnderLabel(labelEl, targetModelName, onDone) {
+    const container = labelEl.closest('div, section') || labelEl.parentElement;
+    if (!container) {
+      if (onDone) onDone();
+      return;
+    }
+
+    const dropdown = container.querySelector('button, [role="combobox"], [role="listbox"], mat-select') ||
+                     labelEl.nextElementSibling;
+
+    if (!dropdown) {
+      if (onDone) onDone();
+      return;
+    }
+
+    dropdown.click();
+
+    setTimeout(() => {
+      // Find options in overlay or listbox (strictly exclude our own extension menu!)
+      const allOpts = Array.from(document.querySelectorAll('[role="option"], mat-option, li'));
+      let matchedOpt = null;
+
+      for (const opt of allOpts) {
+        if (opt.closest('#asc-model-pill-wrap')) continue;
+        const text = (opt.textContent || '').trim().toLowerCase();
+        if (text.includes(targetModelName.toLowerCase())) {
+          matchedOpt = opt;
+          break;
+        }
+      }
+
+      if (!matchedOpt) {
+        const key = targetModelName.toLowerCase();
+        for (const opt of allOpts) {
+          if (opt.closest('#asc-model-pill-wrap')) continue;
+          const text = (opt.textContent || '').trim().toLowerCase();
+          if ((key.includes('3.8') && text.includes('3.8')) ||
+              (key.includes('argon') && text.includes('argon')) ||
+              (key.includes('3.6') && text.includes('3.6')) ||
+              (key.includes('3.5') && text.includes('3.5')) ||
+              (key.includes('3.1') && text.includes('3.1')) ||
+              (key.includes('preview') && text.includes('preview'))) {
+            matchedOpt = opt;
+            break;
+          }
+        }
+      }
+
+      if (matchedOpt) {
+        matchedOpt.click();
+      } else {
+        document.body.click();
+      }
+
+      if (onDone) setTimeout(onDone, 80);
+    }, 120);
+  }
+
+  function closeSettingsDrawer() {
+    const closeBtn = document.querySelector('button[aria-label*="close" i], button[aria-label*="cancel" i]') ||
+                     Array.from(document.querySelectorAll('button')).find(b => (b.textContent || '').trim() === '✕' || (b.textContent || '').trim() === '×');
+    if (closeBtn) {
+      closeBtn.click();
+    } else {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true }));
     }
   }
 
