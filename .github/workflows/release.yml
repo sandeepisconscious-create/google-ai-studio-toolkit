@@ -1,0 +1,29 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build release zip
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+          ZIP_NAME="google-ai-studio-toolkit-${VERSION}.zip"
+          zip -r "${ZIP_NAME}" . -x "*.git*" ".github/*" "screenshots/*" "*.DS_Store"
+          echo "ZIP_NAME=${ZIP_NAME}" >> $GITHUB_ENV
+
+      - name: Upload Release Asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ env.ZIP_NAME }}
+          generate_release_notes: true

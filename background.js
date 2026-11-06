@@ -17,3 +17,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true; // Keep message channel open for async response
   }
 });
+
+// Handle keyboard command shortcuts
+chrome.commands.onCommand.addListener((command) => {
+  if (command === 'capture_applet') {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (tabs && tabs[0] && tabs[0].id) {
+        chrome.tabs.sendMessage(tabs[0].id, { action: 'trigger_capture' }).catch(() => {});
+      }
+    });
+  }
+});

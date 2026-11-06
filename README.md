@@ -5,8 +5,8 @@
 <h1 align="center">Google AI Studio Toolkit</h1>
 
 <p align="center">
-  <a href="https://github.com/sandeepisconscious-create/google-ai-studio-toolkit/releases/download/v1.7.0/google-ai-studio-toolkit-v1.7.0.zip">
-    <img src="https://img.shields.io/badge/⬇%EF%B8%8F_Download_Extension_(v1.7.0)-ZIP-2563EB?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Download Extension ZIP">
+  <a href="https://github.com/sandeepisconscious-create/google-ai-studio-toolkit/releases/download/v1.8.0/google-ai-studio-toolkit-v1.8.0.zip">
+    <img src="https://img.shields.io/badge/⬇%EF%B8%8F_Download_Extension_(v1.8.0)-ZIP-2563EB?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Download Extension ZIP">
   </a>
 </p>
 
@@ -33,9 +33,11 @@ It adds one-click live applet screenshot capture directly into the prompt input,
 - **Direct Input Staging**: Automatically attaches the screenshot chip into the prompt input box and copies the image to your clipboard.
 - **Workspace-Safe**: Does not pollute or create temporary files inside your project codebase.
 
-### 2. 🎛️ In-Prompt Model Switcher & Persistent Selection
+### 2. 🎛️ In-Prompt Model Switcher & Multi-Tab Sync
 - **Accessible in Prompt Bar**: Switch models directly from the bottom prompt bar without needing to open the native settings drawer.
-- **Persistent Selection Memory**: Whichever model you select is remembered permanently across sessions and tab reloads until you explicitly choose a different one.
+- **Active Model Indicator**: Clear visual checkmark (`✓`) indicates your active selection at a glance.
+- **Instant Multi-Tab Synchronization**: Switching models in one tab instantly propagates to all other open AI Studio tabs via `chrome.storage.onChanged` without page refresh.
+- **Persistent Selection Memory**: Whichever model you select is remembered permanently across sessions and reloads.
 - **Dual-Layer Synchronization**:
   - **Native Drawer Driver**: Programmatically selects the model inside Google AI Studio's native `Chat settings` drawer.
   - **Network Request Override**: A main-world service worker intercepts outgoing prompt requests to ensure Google's backend always executes your chosen model.
@@ -62,8 +64,8 @@ It adds one-click live applet screenshot capture directly into the prompt input,
 Anyone can install and run this extension locally in Google Chrome, Brave, Edge, or any Chromium browser.
 
 ### Option A: Direct Download ZIP (Recommended)
-1. Click the **[⬇️ Download Extension ZIP](https://github.com/sandeepisconscious-create/google-ai-studio-toolkit/releases/download/v1.7.0/google-ai-studio-toolkit-v1.7.0.zip)** button.
-2. Unzip `google-ai-studio-toolkit-v1.7.0.zip` to a folder on your computer.
+1. Click the **[⬇️ Download Extension ZIP](https://github.com/sandeepisconscious-create/google-ai-studio-toolkit/releases/download/v1.8.0/google-ai-studio-toolkit-v1.8.0.zip)** button.
+2. Unzip `google-ai-studio-toolkit-v1.8.0.zip` to a folder on your computer.
 
 ### Option B: Clone with Git
 ```bash
@@ -91,6 +93,9 @@ git clone https://github.com/sandeepisconscious-create/google-ai-studio-toolkit.
 | <kbd>Enter</kbd> *(when Enter to Send is ON)* | Send prompt immediately |
 | <kbd>Shift</kbd> + <kbd>Enter</kbd> *(when Enter to Send is ON)* | Insert new line in prompt |
 | <kbd>Enter</kbd> *(when Enter to Send is OFF)* | Insert new line (Google AI Studio default) |
+
+> [!TIP]
+> You can customize the capture shortcut anytime by opening `chrome://extensions/shortcuts` in your browser.
 
 ---
 

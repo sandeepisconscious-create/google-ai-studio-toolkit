@@ -1,20 +1,25 @@
 {
   "manifest_version": 3,
   "name": "Google AI Studio Toolkit",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "description": "Productivity toolkit for Google AI Studio: Applet capture, in-prompt model switching, Enter to Send toggle, and dynamic model discovery.",
   "permissions": [
     "activeTab",
     "storage",
-    "scripting",
-    "clipboardRead",
-    "clipboardWrite",
-    "tabs"
+    "clipboardWrite"
   ],
   "host_permissions": [
-    "<all_urls>",
     "https://aistudio.google.com/*"
   ],
+  "commands": {
+    "capture_applet": {
+      "suggested_key": {
+        "default": "Alt+S",
+        "mac": "Alt+S"
+      },
+      "description": "Capture live applet preview and attach to prompt"
+    }
+  },
   "background": {
     "service_worker": "background.js"
   },

@@ -36,6 +36,16 @@
         const menu = document.getElementById('asc-model-dropdown-menu');
         if (menu) renderModelMenuItems(menu);
       }
+      if (changes.asc_selected_model && changes.asc_selected_model.newValue) {
+        const newModel = changes.asc_selected_model.newValue;
+        if (newModel !== activeModel) {
+          activeModel = newModel;
+          updatePillLabel();
+          window.postMessage({ type: 'ASC_SET_ACTIVE_MODEL', model: activeModel }, '*');
+          const menu = document.getElementById('asc-model-dropdown-menu');
+          if (menu) renderModelMenuItems(menu);
+        }
+      }
     });
   }
 
@@ -45,6 +55,9 @@
         enterToSendEnabled = Boolean(msg.enabled);
         const menu = document.getElementById('asc-model-dropdown-menu');
         if (menu) renderModelMenuItems(menu);
+      }
+      if (msg && msg.action === 'trigger_capture') {
+        captureAppletScreenshot();
       }
     });
   }
@@ -672,6 +685,7 @@
         <div class="asc-model-name-group">
           <span>${escapeHtml(m.name)}</span>
         </div>
+        ${isActive ? '<span class="asc-check">✓</span>' : ''}
       `;
 
       item.addEventListener('click', (e) => {
@@ -811,15 +825,20 @@
   function cropImageDataUrl(dataUrl, crop, callback) {
     const img = new Image();
     img.onload = () => {
+      const cropX = Math.max(0, Math.min(crop.x, img.width - 1));
+      const cropY = Math.max(0, Math.min(crop.y, img.height - 1));
+      const cropW = Math.max(1, Math.min(crop.width, img.width - cropX));
+      const cropH = Math.max(1, Math.min(crop.height, img.height - cropY));
+
       const canvas = document.createElement('canvas');
-      canvas.width = crop.width;
-      canvas.height = crop.height;
+      canvas.width = cropW;
+      canvas.height = cropH;
       const ctx = canvas.getContext('2d');
 
       ctx.drawImage(
         img,
-        crop.x, crop.y, crop.width, crop.height,
-        0, 0, crop.width, crop.height
+        cropX, cropY, cropW, cropH,
+        0, 0, cropW, cropH
       );
 
       callback(canvas.toDataURL('image/png'));
