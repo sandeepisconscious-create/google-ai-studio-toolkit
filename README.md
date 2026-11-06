@@ -47,7 +47,7 @@ Since this extension is open source, anyone can install and run it locally in Ch
 
 ### Option A: Clone with Git
 ```bash
-git clone https://github.com/YOUR_USERNAME/google-ai-studio-toolkit.git
+git clone https://github.com/sandeepisconscious-create/google-ai-studio-toolkit.git
 ```
 
 ### Option B: Download ZIP
