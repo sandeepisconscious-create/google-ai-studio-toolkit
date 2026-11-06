@@ -6,7 +6,7 @@
 
   // Baseline fallback models (used until dynamic discovery completes)
   const BASELINE_MODELS = [
-    { key: 'gemini-4-argon', name: 'Gemini 4 Argon', shortName: 'Gemini 4 Argon', isAuto: false, isPaid: true },
+    { key: 'gemini-4-argon', name: 'Gemini 4 Argon', shortName: 'Gemini 4 Argon', isAuto: false, isPaid: false },
     { key: 'gemini-3.8-flash', name: 'Gemini 3.8 Flash', shortName: 'Gemini 3.8 Flash', isAuto: false, isPaid: false },
     { key: 'gemini-3.6-flash', name: 'Gemini 3.6 Flash', shortName: 'Gemini 3.6 Flash', isAuto: false, isPaid: false },
     { key: 'gemini-3.5-flash-lite', name: 'Gemini 3.5 Flash Lite', shortName: 'Gemini 3.5 Flash Lite', isAuto: false, isPaid: false },
@@ -37,11 +37,7 @@
 
     if (/^(Select|Cancel|Done|Settings|Apply|Close)$/i.test(name)) return null;
 
-    let isPaid = false;
-    if (/\b(paid)\b/i.test(name) || raw.isPaid) {
-      isPaid = true;
-    }
-
+    // Clean display name: remove "(Paid)" or trailing annotations
     const cleanName = name.replace(/\s*\((paid|preview|default)\)/gi, '').trim();
     const displayName = cleanName.length > 0 ? cleanName : name;
     const key = displayName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -51,7 +47,7 @@
       name: displayName,
       shortName: displayName,
       isAuto: false,
-      isPaid
+      isPaid: false
     };
   }
 
@@ -240,10 +236,16 @@
       usageState = { dayKey, counts: {} };
     }
 
-    const matched = currentModels.find(
+    let matched = currentModels.find(
       m => m.name.toLowerCase() === modelName.toLowerCase() ||
            m.shortName.toLowerCase() === modelName.toLowerCase()
     );
+
+    // Flexible match for Argon or aliases
+    if (!matched && /argon/i.test(modelName)) {
+      matched = currentModels.find(m => /argon/i.test(m.key) || /argon/i.test(m.name));
+    }
+
     const key = matched ? matched.key : 'gemini-3.8-flash';
     if (key === 'auto') return;
 
@@ -259,29 +261,56 @@
     }
 
     const domCounts = {};
-    const elements = document.querySelectorAll('div, span, p');
     const discoveredFromHistory = [];
 
-    for (const el of elements) {
-      if (el.closest('#asc-model-pill-wrap')) continue;
+    // Search for all elements containing run timing keywords ("Ran for" or "Running for")
+    const allEls = document.querySelectorAll('*');
+    const timingEls = Array.from(allEls).filter(el => {
+      if (el.children.length > 2) return false;
+      const t = el.textContent || '';
+      return /(•|\u2022)?\s*(Ran for|Running for)/i.test(t);
+    });
 
-      if (el.children.length === 0 && el.textContent) {
-        const text = el.textContent.trim();
-        if (/(•|\u2022)\s*(Ran for|Running for)/i.test(text)) {
-          // Extract model name part preceding the bullet
-          const parts = text.split(/(•|\u2022)/);
-          const rawHeaderModel = parts[0].trim();
-          if (/gemini/i.test(rawHeaderModel)) {
-            discoveredFromHistory.push({ name: rawHeaderModel });
-          }
+    for (const timingEl of timingEls) {
+      if (timingEl.closest('#asc-model-pill-wrap')) continue;
 
-          for (const m of currentModels) {
-            if (m.isAuto) continue;
-            if (text.toLowerCase().includes(m.name.toLowerCase())) {
-              domCounts[m.key] = (domCounts[m.key] || 0) + 1;
-            }
-          }
+      // Traverse up to the card/turn container (up to 5 levels) to capture model label
+      let container = timingEl;
+      let containerText = '';
+      for (let i = 0; i < 5 && container && container !== document.body; i++) {
+        const text = (container.textContent || '').trim();
+        if (/gemini|argon/i.test(text)) {
+          containerText = text;
+          break;
         }
+        container = container.parentElement;
+      }
+
+      if (!containerText) continue;
+
+      // Match against known models
+      let matchedModel = null;
+      for (const m of currentModels) {
+        if (m.isAuto) continue;
+        if (containerText.toLowerCase().includes(m.name.toLowerCase())) {
+          matchedModel = m;
+          break;
+        }
+      }
+
+      // Fallback: specifically detect Argon if present anywhere in the run container
+      if (!matchedModel && /argon/i.test(containerText)) {
+        matchedModel = currentModels.find(m => /argon/i.test(m.key) || /argon/i.test(m.name));
+      }
+
+      if (matchedModel) {
+        domCounts[matchedModel.key] = (domCounts[matchedModel.key] || 0) + 1;
+      }
+
+      // Auto-discover model name
+      const geminiMatch = containerText.match(/(Gemini\s+[\w\d\.\-]+(?:\s+[\w\d\.\-]+)?)/i);
+      if (geminiMatch && geminiMatch[1]) {
+        discoveredFromHistory.push({ name: geminiMatch[1].trim() });
       }
     }
 
@@ -379,28 +408,44 @@
   }
 
   // --- 3. Intercept Prompt Submission ---
+  let globalSubmitAttached = false;
   function attachAutoRouterListeners() {
-    const promptInput = findPromptInputElement();
-    if (promptInput && !promptInput.dataset.ascRouterAttached) {
-      promptInput.dataset.ascRouterAttached = 'true';
+    if (globalSubmitAttached) return;
+    globalSubmitAttached = true;
 
-      promptInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-          const promptText = promptInput.value || promptInput.innerText || promptInput.textContent || '';
-          handlePromptSubmit(promptText);
+    // Capture Enter key across any prompt input element
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        const target = e.target;
+        if (target && (target.tagName === 'TEXTAREA' || target.isContentEditable || target.getAttribute('role') === 'textbox')) {
+          const promptText = target.value || target.innerText || target.textContent || '';
+          if (promptText.trim()) {
+            handlePromptSubmit(promptText);
+          }
         }
-      }, true);
-    }
+      }
+    }, true);
 
-    const sendBtn = findSendButton();
-    if (sendBtn && !sendBtn.dataset.ascRouterAttached) {
-      sendBtn.dataset.ascRouterAttached = 'true';
-      sendBtn.addEventListener('click', () => {
+    // Capture Send/Run button click
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('button, [role="button"]');
+      if (!btn) return;
+      if (btn.id === 'asc-prompt-camera-btn' || btn.id === 'asc-model-pill-btn') return;
+
+      const aria = (btn.getAttribute('aria-label') || '').toLowerCase();
+      const text = (btn.textContent || '').trim().toLowerCase();
+      const hasArrow = btn.querySelector('svg path[d*="M4 12"], svg path[d*="M2.01 21"], svg path[d*="M12 4"]') ||
+        text === '↑' || text === 'send';
+      const isSend = aria.includes('send') || aria.includes('submit') || aria.includes('run');
+
+      if ((hasArrow || isSend) && btn.getBoundingClientRect().y > window.innerHeight * 0.4) {
         const inputEl = findPromptInputElement();
         const promptText = inputEl ? (inputEl.value || inputEl.innerText || inputEl.textContent || '') : '';
-        handlePromptSubmit(promptText);
-      }, true);
-    }
+        if (promptText.trim()) {
+          handlePromptSubmit(promptText);
+        }
+      }
+    }, true);
   }
 
   function findSendButton() {
@@ -611,7 +656,6 @@
       item.className = `asc-model-menu-item ${isActive ? 'active' : ''}`;
 
       const usedCount = usageState.counts[m.key] || 0;
-      const badgeHtml = m.isPaid ? `<span class="asc-mono-tag">Paid</span>` : '';
       const usageHtml = (!m.isAuto && usedCount > 0)
         ? `<span class="asc-usage-meta">${usedCount} used</span>`
         : '';
@@ -619,7 +663,6 @@
       item.innerHTML = `
         <div class="asc-model-name-group">
           <span>${escapeHtml(m.name)}</span>
-          ${badgeHtml}
         </div>
         ${usageHtml}
       `;
