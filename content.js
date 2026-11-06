@@ -184,7 +184,12 @@
       }
 
       updatePillLabel();
-      syncWithAIStudioNativeDropdown(activeModel);
+
+      // Immediately inform network interceptor of active model
+      window.postMessage({
+        type: 'ASC_SET_ACTIVE_MODEL',
+        model: activeModel
+      }, '*');
     });
   }
 
@@ -206,6 +211,7 @@
     syncWithAIStudioNativeDropdown(modelName);
   }
 
+  let isSyncingNative = false;
   function syncWithAIStudioNativeDropdown(targetModelName) {
     if (!targetModelName) return;
 
@@ -216,25 +222,38 @@
     }, '*');
 
     // 2. Programmatically select in Google AI Studio's native settings UI
-    attemptNativeDropdownSelection(targetModelName);
+    if (isSyncingNative) return;
+    isSyncingNative = true;
+
+    attemptNativeDropdownSelection(targetModelName, () => {
+      setTimeout(() => {
+        isSyncingNative = false;
+      }, 500);
+    });
   }
 
-  function attemptNativeDropdownSelection(targetModelName) {
+  function attemptNativeDropdownSelection(targetModelName, onDone) {
+    function finish() {
+      if (onDone) onDone();
+    }
+
     // Check if "Select model to use in Chat" is already in the DOM
     const existingLabel = findLabelInDOM('Select model to use in Chat');
     if (existingLabel) {
-      selectOptionUnderLabel(existingLabel, targetModelName);
+      selectOptionUnderLabel(existingLabel, targetModelName, finish);
       return;
     }
 
-    // If drawer is closed, open the Settings / Project drawer
+    // If drawer is closed, open the Settings / Project drawer ONCE
     const settingsBtn = findSettingsDrawerButton();
-    if (!settingsBtn) return;
+    if (!settingsBtn) {
+      finish();
+      return;
+    }
 
     settingsBtn.click();
 
     setTimeout(() => {
-      // Switch to Chat tab in drawer if needed
       const chatTab = findChatTabButton();
       if (chatTab) chatTab.click();
 
@@ -243,12 +262,14 @@
         if (chatLabel) {
           selectOptionUnderLabel(chatLabel, targetModelName, () => {
             closeSettingsDrawer();
+            finish();
           });
         } else {
           closeSettingsDrawer();
+          finish();
         }
-      }, 120);
-    }, 120);
+      }, 150);
+    }, 150);
   }
 
   function findLabelInDOM(text) {
@@ -799,14 +820,8 @@
     subtree: true
   });
 
-  let tickCount = 0;
   setInterval(() => {
     setupPromptBar();
-    tickCount++;
-    if (tickCount % 3 === 0) {
-      scanNativeSettingsForModels();
-      syncWithAIStudioNativeDropdown(activeModel);
-    }
   }, 1000);
 
   // Initialize saved model on startup
