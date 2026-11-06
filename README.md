@@ -1,5 +1,9 @@
 # Google AI Studio Toolkit
 
+<p align="center">
+  <img src="icons/icon128.png" width="96" height="96" alt="Google AI Studio Toolkit Logo">
+</p>
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Manifest V3](https://img.shields.io/badge/Chrome-Manifest%20V3-4285F4.svg?logo=google-chrome&logoColor=white)](manifest.json)
 [![Platform](https://img.shields.io/badge/Platform-Google%20AI%20Studio-0F9D58.svg)](https://aistudio.google.com)
