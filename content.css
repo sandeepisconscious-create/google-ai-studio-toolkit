@@ -199,29 +199,7 @@
   font-weight: 600;
 }
 
-.asc-mono-tag {
-  font-size: 10px;
-  background-color: #252628;
-  color: #9aa0a6;
-  border: 1px solid #3c4043;
-  padding: 1px 6px;
-  border-radius: 6px;
-  font-weight: 500;
-}
-
-.asc-usage-meta {
-  font-size: 11px;
-  color: #8e918f;
-  font-variant-numeric: tabular-nums;
-}
-
-.asc-menu-divider {
-  height: 1px;
-  background-color: #2b2c2e;
-  margin: 4px 0;
-}
-
-/* Flash feedback over applet */
+/* Flash feedback over captured applet */
 .asc-flash-overlay {
   position: absolute;
   pointer-events: none;
@@ -231,105 +209,6 @@
   border-radius: 8px;
   box-sizing: border-box;
   transition: opacity 0.4s ease-out;
-}
-
-/* Toast Feedback - Anchored exactly 6px above the prompt box */
-.asc-toast {
-  position: fixed;
-  background-color: #18191a;
-  color: #e3e3e3;
-  border: 1px solid #3c4043;
-  border-radius: 8px;
-  padding: 8px 12px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.65);
-  z-index: 1000000;
-  font-family: 'Google Sans', Roboto, sans-serif;
-  font-size: 12px;
-  animation: ascToastIn 0.15s ease-out;
-  pointer-events: auto;
-}
-
-.asc-toast-thumb {
-  width: 32px;
-  height: 32px;
-  border-radius: 5px;
-  object-fit: cover;
-  border: 1px solid #3c4043;
-  background: #000;
-  flex-shrink: 0;
-}
-
-.asc-toast-content {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-
-.asc-toast-title {
-  font-weight: 600;
-  color: #ffffff;
-  font-size: 12px;
-}
-
-.asc-toast-subtitle {
-  font-size: 11px;
-  color: #9aa0a6;
-}
-
-.asc-toast-btn {
-  background: #252628;
-  border: 1px solid #3c4043;
-  color: #e3e3e3;
-  font-size: 11px;
-  padding: 3px 8px;
-  border-radius: 4px;
-  cursor: pointer;
-  margin-left: 4px;
-  flex-shrink: 0;
-}
-
-.asc-toast-btn:hover {
-  background: #37393b;
-  color: #ffffff;
-}
-
-.asc-enter-to-send-row {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  padding: 8px 14px !important;
-  font-size: 12px !important;
-  color: #9aa0a6 !important;
-  cursor: pointer !important;
-  transition: background-color 0.1s !important;
-}
-
-.asc-enter-to-send-row:hover {
-  background-color: #252628 !important;
-  color: #ffffff !important;
-}
-
-.asc-toggle-state {
-  font-size: 10px !important;
-  font-weight: 600 !important;
-  padding: 2px 7px !important;
-  border-radius: 4px !important;
-  font-family: inherit !important;
-}
-
-.asc-toggle-state.on {
-  background-color: #3c4043 !important;
-  color: #ffffff !important;
-  border: 1px solid #5f6368 !important;
-}
-
-.asc-toggle-state.off {
-  background-color: #202123 !important;
-  color: #8e918f !important;
-  border: 1px solid #3c4043 !important;
 }
 
 /* Hide Prompt Suggestions when active */
@@ -347,10 +226,5 @@ body.asc-hide-suggestions .asc-suggestion-hidden {
 
 @keyframes ascMenuFadeIn {
   from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes ascToastIn {
-  from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
 }

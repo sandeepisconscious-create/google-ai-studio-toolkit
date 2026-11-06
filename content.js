@@ -1,10 +1,29 @@
 // Google AI Studio Toolkit - Content Script
+// Manages in-prompt model switcher, one-click applet screenshot, suggestions suppression, and Enter to Send controls.
 (function () {
   'use strict';
 
   console.log('[AI Studio Toolkit] Initializing toolkit...');
 
-  // Baseline fallback models (used until dynamic discovery completes)
+  // --- 1. Lifecycle & Context Safety Guards ---
+
+  /**
+   * Validates that the Chrome extension context is still active.
+   * Prevents "Extension context invalidated" errors when the extension is reloaded or updated in developer mode.
+   * @returns {boolean}
+   */
+  function isContextValid() {
+    try {
+      return typeof chrome !== 'undefined' && Boolean(chrome.runtime && chrome.runtime.id);
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // --- 2. Registry & Baseline Fallback Models ---
+
+  const CURRENT_CACHE_VERSION = 'v1.6.4';
+
   const BASELINE_MODELS = [
     { key: 'gemini-4-argon', name: 'Gemini 4 Argon', shortName: 'Gemini 4 Argon' },
     { key: 'gemini-3.8-flash', name: 'Gemini 3.8 Flash', shortName: 'Gemini 3.8 Flash' },
@@ -14,37 +33,26 @@
     { key: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview', shortName: 'Gemini 3 Flash Preview' }
   ];
 
-  // Dynamic model registry (No Auto)
   let currentModels = [...BASELINE_MODELS];
-
-  // Safety guard against "Extension context invalidated" when user reloads/updates extension
-  function isContextValid() {
-    try {
-      return typeof chrome !== 'undefined' && Boolean(chrome.runtime && chrome.runtime.id);
-    } catch (e) {
-      return false;
-    }
-  }
-
-  // Remembered active model (persisted in chrome.storage.local)
   let activeModel = 'Gemini 3.8 Flash';
   let isCapturing = false;
   let enterToSendEnabled = false;
   let hideSuggestionsEnabled = true;
 
-  // Load preferences from storage
-  if (isContextValid() && chrome.storage && chrome.storage.local) {
+  // --- 3. Preferences & Storage Sync ---
+
+  if (isContextValid() && chrome.storage?.local) {
     try {
       chrome.storage.local.get(['asc_enter_to_send', 'asc_hide_suggestions'], (res) => {
         if (!isContextValid()) return;
-        enterToSendEnabled = Boolean(res && res.asc_enter_to_send);
-        hideSuggestionsEnabled = res && res.asc_hide_suggestions !== undefined ? Boolean(res.asc_hide_suggestions) : true;
+        enterToSendEnabled = Boolean(res?.asc_enter_to_send);
+        hideSuggestionsEnabled = res?.asc_hide_suggestions !== undefined ? Boolean(res.asc_hide_suggestions) : true;
         scanAndHideSuggestions();
       });
     } catch (e) {}
   }
 
-  if (isContextValid() && chrome.storage && chrome.storage.onChanged) {
+  if (isContextValid() && chrome.storage?.onChanged) {
     try {
       chrome.storage.onChanged.addListener((changes) => {
         if (!isContextValid()) return;
@@ -55,7 +63,7 @@
           hideSuggestionsEnabled = Boolean(changes.asc_hide_suggestions.newValue);
           scanAndHideSuggestions();
         }
-        if (changes.asc_selected_model && changes.asc_selected_model.newValue) {
+        if (changes.asc_selected_model?.newValue) {
           const newModel = changes.asc_selected_model.newValue;
           if (newModel !== activeModel) {
             activeModel = newModel;
@@ -69,25 +77,31 @@
     } catch (e) {}
   }
 
-  if (isContextValid() && chrome.runtime && chrome.runtime.onMessage) {
+  if (isContextValid() && chrome.runtime?.onMessage) {
     try {
       chrome.runtime.onMessage.addListener((msg) => {
         if (!isContextValid()) return;
-        if (msg && msg.type === 'ASC_ENTER_TO_SEND_CHANGED') {
+        if (msg?.type === 'ASC_ENTER_TO_SEND_CHANGED') {
           enterToSendEnabled = Boolean(msg.enabled);
         }
-        if (msg && msg.type === 'ASC_HIDE_SUGGESTIONS_CHANGED') {
+        if (msg?.type === 'ASC_HIDE_SUGGESTIONS_CHANGED') {
           hideSuggestionsEnabled = Boolean(msg.enabled);
           scanAndHideSuggestions();
         }
-        if (msg && msg.action === 'trigger_capture') {
+        if (msg?.action === 'trigger_capture') {
           captureAppletScreenshot();
         }
       });
     } catch (e) {}
   }
 
-  // --- 1. Dynamic Model Discovery & Normalization ---
+  // --- 4. Dynamic Model Discovery & Normalization ---
+
+  /**
+   * Normalizes a model entry and eliminates aliases or UI badges
+   * @param {string|object} raw
+   * @returns {{key: string, name: string, shortName: string}|null}
+   */
   function normalizeModelEntry(raw) {
     if (!raw) return null;
     let name = typeof raw === 'string' ? raw : (raw.displayName || raw.name || '');
@@ -96,18 +110,16 @@
 
     if (/^(Select|Cancel|Done|Settings|Apply|Close|Auto)$/i.test(name)) return null;
 
-    // 1. Filter out unversioned floating aliases like "Gemini Flash Latest" or "Gemini Flash-Lite Latest"
-    if (/\blatest\b/i.test(name) && !/\d+(\.\d+)?/.test(name)) {
-      return null;
-    }
+    // Filter out unversioned floating aliases like "Gemini Flash Latest"
+    if (/\blatest\b/i.test(name) && !/\d+(\.\d+)?/.test(name)) return null;
 
-    // 2. If it has "Default (Gemini ...)", unwrap the inner model name
+    // Unwrap "Default (Gemini ...)"
     const defaultMatch = name.match(/Default\s*\(([^)]+)\)/i);
     if (defaultMatch && defaultMatch[1]) {
       name = defaultMatch[1].trim();
     }
 
-    // 3. Strip concatenated tags like "Paid", "Free", "Beta", "(Paid)", "(Preview)"
+    // Strip UI badge text like "Paid", "Free", "Beta", "(Paid)", "(Preview)"
     name = name.replace(/Paid$/i, '')
                .replace(/\s*\((paid|preview|default|beta|new)\)/gi, '')
                .replace(/\s+/g, ' ')
@@ -115,7 +127,7 @@
 
     if (!name || !/gemini/i.test(name)) return null;
 
-    // 4. Generate clean canonical semantic key (e.g. "gemini-4-argon", "gemini-3.8-flash")
+    // Generate canonical semantic key
     const key = name.toLowerCase()
                     .replace(/[^a-z0-9\.]+/g, '-')
                     .replace(/^-|-$/g, '');
@@ -129,18 +141,15 @@
 
   function sortModelsList() {
     currentModels.sort((a, b) => {
-      // 1. Sort by version number descending (e.g. 5 > 4.5 > 4 > 3.8 > 3.6 > 3.5 > 3.1 > 3)
       const aVer = parseFloat((a.name.match(/\d+(\.\d+)?/) || [0])[0]);
       const bVer = parseFloat((b.name.match(/\d+(\.\d+)?/) || [0])[0]);
       if (bVer !== aVer) return bVer - aVer;
 
-      // 2. High-reasoning / Pro / Argon / Ultra models above Flash of the same version
       const aPro = /argon|pro|ultra/i.test(a.name);
       const bPro = /argon|pro|ultra/i.test(b.name);
       if (aPro && !bPro) return -1;
       if (!aPro && bPro) return 1;
 
-      // 3. Alphabetical tiebreaker
       return a.name.localeCompare(b.name);
     });
   }
@@ -148,7 +157,7 @@
   function saveDynamicModels() {
     if (!isContextValid()) return;
     try {
-      if (chrome.storage && chrome.storage.local) {
+      if (chrome.storage?.local) {
         chrome.storage.local.set({ asc_dynamic_models: currentModels }, () => {
           if (chrome.runtime?.lastError) { /* ignore */ }
         });
@@ -164,9 +173,8 @@
       const entry = normalizeModelEntry(raw);
       if (!entry) continue;
 
-      // Deduplicate by semantic key or lowercase name
-      const existing = currentModels.find(m => 
-        m.key === entry.key || 
+      const existing = currentModels.find(m =>
+        m.key === entry.key ||
         m.name.toLowerCase() === entry.name.toLowerCase()
       );
 
@@ -181,9 +189,7 @@
       saveDynamicModels();
 
       const menu = document.getElementById('asc-model-dropdown-menu');
-      if (menu) {
-        renderModelMenuItems(menu);
-      }
+      if (menu) renderModelMenuItems(menu);
       updatePillLabel();
     }
   }
@@ -199,7 +205,7 @@
       if (!container) continue;
 
       const select = container.querySelector('select');
-      if (select && select.options && select.options.length > 0) {
+      if (select?.options?.length > 0) {
         const found = [];
         for (const opt of select.options) {
           const t = (opt.text || opt.value || '').trim();
@@ -220,16 +226,16 @@
     }
   }
 
-  // Tier 2: Network / Interceptor message listener
+  // Tier 2: Network Interceptor message listener
   window.addEventListener('message', (event) => {
-    if (!isContextValid()) return;
-    if (event.source !== window) return;
-    if (event.data && event.data.type === 'ASC_MODELS_DISCOVERED' && Array.isArray(event.data.models)) {
+    if (!isContextValid() || event.source !== window || !event.data) return;
+    if (event.data.type === 'ASC_MODELS_DISCOVERED' && Array.isArray(event.data.models)) {
       mergeDiscoveredModels(event.data.models);
     }
   });
 
-  // --- 2. Quota Reset Time (Pacific Time Midnight) ---
+  // --- 5. Quota Reset Time (Pacific Time Midnight) ---
+
   function getPacificResetSeconds() {
     try {
       const now = new Date();
@@ -260,18 +266,16 @@
     return h > 0 ? `${h}h ${m}m` : `${m}m`;
   }
 
-  // --- 3. Persistent Model Selection & Cache Purging ---
-  const CURRENT_CACHE_VERSION = 'v1.6.4';
+  // --- 6. Persistent Model Selection & Cache Purging ---
 
   function loadSavedModel() {
     if (!isContextValid()) return;
     try {
-      if (!chrome.storage || !chrome.storage.local) return;
+      if (!chrome.storage?.local) return;
 
       chrome.storage.local.get(['asc_cache_ver', 'asc_selected_model', 'asc_chat_model', 'asc_dynamic_models'], (res) => {
         if (!isContextValid()) return;
 
-        // Purge stale duplicate-riddled cache from previous versions
         if (!res || res.asc_cache_ver !== CURRENT_CACHE_VERSION) {
           currentModels = [...BASELINE_MODELS];
           try {
@@ -295,7 +299,6 @@
 
         updatePillLabel();
 
-        // Immediately inform network interceptor of active model
         window.postMessage({
           type: 'ASC_SET_ACTIVE_MODEL',
           model: activeModel
@@ -310,10 +313,9 @@
     activeModel = modelName;
     updatePillLabel();
 
-    // Persist permanently in storage
     if (isContextValid()) {
       try {
-        if (chrome.storage && chrome.storage.local) {
+        if (chrome.storage?.local) {
           chrome.storage.local.set({
             asc_selected_model: modelName,
             asc_chat_model: modelName
@@ -322,7 +324,6 @@
       } catch (e) {}
     }
 
-    // Sync with Google AI Studio's native chat settings
     syncWithAIStudioNativeDropdown(modelName);
   }
 
@@ -330,13 +331,11 @@
   function syncWithAIStudioNativeDropdown(targetModelName) {
     if (!targetModelName) return;
 
-    // 1. Immediately inform the main-world network interceptor
     window.postMessage({
       type: 'ASC_SET_ACTIVE_MODEL',
       model: targetModelName
     }, '*');
 
-    // 2. Programmatically select in Google AI Studio's native settings UI
     if (isSyncingNative) return;
     isSyncingNative = true;
 
@@ -352,14 +351,12 @@
       if (onDone) onDone();
     }
 
-    // Check if "Select model to use in Chat" is already in the DOM
     const existingLabel = findLabelInDOM('Select model to use in Chat');
     if (existingLabel) {
       selectOptionUnderLabel(existingLabel, targetModelName, finish);
       return;
     }
 
-    // If drawer is closed, open the Settings / Project drawer ONCE
     const settingsBtn = findSettingsDrawerButton();
     if (!settingsBtn) {
       finish();
@@ -457,7 +454,6 @@
     dropdown.click();
 
     setTimeout(() => {
-      // Find options in overlay or listbox (strictly exclude our own extension menu!)
       const allOpts = Array.from(document.querySelectorAll('[role="option"], mat-option, li'));
       let matchedOpt = null;
 
@@ -507,7 +503,8 @@
     }
   }
 
-  // --- SVG Icons ---
+  // --- 7. SVG Icons ---
+
   const CAMERA_ICON = `
     <svg viewBox="0 0 24 24">
       <path d="M12 15.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4z"/>
@@ -519,7 +516,8 @@
       <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
     </svg>`;
 
-  // --- 4. Find Elements in AI Studio ---
+  // --- 8. Finding Elements in AI Studio UI ---
+
   function findPlusButton() {
     const buttons = Array.from(document.querySelectorAll('button'));
     for (const b of buttons) {
@@ -607,7 +605,8 @@
     return null;
   }
 
-  // --- 5. In-Prompt Injection ---
+  // --- 9. In-Prompt Injection ---
+
   function setupPromptBar() {
     const plusBtn = findPlusButton();
     const modeBtn = findDefaultModeButton();
@@ -703,7 +702,6 @@
     return wrap;
   }
 
-  // Minimal, clean dropdown displaying only quota reset countdown and model names
   function renderModelMenuItems(menu) {
     menu.innerHTML = '';
 
@@ -753,7 +751,8 @@
     }
   }
 
-  // --- 6. Single-Instance Applet Screenshot & Drop Insertion ---
+  // --- 10. Single-Instance Applet Screenshot & Drop Insertion ---
+
   function findAppletElement() {
     const iframes = Array.from(document.querySelectorAll('iframe')).filter(f => {
       const r = f.getBoundingClientRect();
@@ -899,15 +898,15 @@
   }
 
   function dataUrlToBlob(dataUrl) {
-    const arr = dataUrl.split(',');
-    const mime = arr[0].match(/:(.*?);/)[1];
-    const bstr = atob(arr[1]);
-    let n = bstr.length;
-    const u8arr = new Uint8Array(n);
-    while (n--) {
-      u8arr[n] = bstr.charCodeAt(n);
+    const [header, base64] = dataUrl.split(',');
+    const mime = (header.match(/:(.*?);/) || ['', 'image/png'])[1];
+    const binary = atob(base64);
+    const len = binary.length;
+    const buffer = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+      buffer[i] = binary.charCodeAt(i);
     }
-    return new Blob([u8arr], { type: mime });
+    return new Blob([buffer], { type: mime });
   }
 
   function dispatchDropEvent(target, file) {
@@ -953,7 +952,8 @@
     }[m]));
   }
 
-  // Enter to Send Interception (when enabled)
+  // --- 11. Enter to Send Interception ---
+
   window.addEventListener('keydown', (e) => {
     if (!enterToSendEnabled) return;
 
@@ -989,7 +989,8 @@
     }
   });
 
-  // --- 7. Hide Suggestions Scanner ---
+  // --- 12. Hide Suggestions Scanner ---
+
   function scanAndHideSuggestions() {
     if (!hideSuggestionsEnabled) {
       document.body.classList.remove('asc-hide-suggestions');
@@ -1002,44 +1003,7 @@
 
     document.body.classList.add('asc-hide-suggestions');
 
-    // 1. Text-based discovery: Find "Suggestions" header
-    const candidateHeaders = Array.from(document.querySelectorAll('*')).filter((el) => {
-      if (el.closest('#asc-model-pill-wrap') || el.id === 'asc-prompt-camera-btn') return false;
-      const t = (el.textContent || '').trim();
-      return t === 'Suggestions' && el.children.length === 0;
-    });
-
-    for (const header of candidateHeaders) {
-      let curr = header.parentElement;
-      let target = null;
-      let depth = 0;
-
-      while (curr && curr !== document.body && depth < 8) {
-        // Never hide the prompt textarea or toolkit buttons
-        if (curr.querySelector('textarea, [contenteditable="true"], [role="textbox"], #asc-prompt-camera-btn, #asc-model-pill-wrap')) {
-          break;
-        }
-
-        const text = curr.textContent || '';
-        const hasCards = (curr.querySelectorAll('button, [role="button"]').length >= 2) ||
-                         text.includes('AI Features') ||
-                         text.includes('New feature');
-        const hasClose = curr.querySelector('button[aria-label*="close" i], button[aria-label*="dismiss" i], svg path[d*="19 6.41"], svg path[d*="M19 6.41"], svg path[d*="M18 6L6 18"]');
-
-        if (hasCards || hasClose) {
-          target = curr;
-        }
-        curr = curr.parentElement;
-        depth++;
-      }
-
-      if (target) {
-        target.classList.add('asc-suggestion-hidden');
-        target.style.setProperty('display', 'none', 'important');
-      }
-    }
-
-    // 2. Class and attribute-based discovery
+    // 1. Selector-based suppression (fast query)
     const selectors = [
       'ms-prompt-suggestions',
       'ms-suggestions',
@@ -1060,34 +1024,48 @@
       });
     }
 
-    // 3. Chip-based discovery
-    const chips = Array.from(document.querySelectorAll('*')).filter((el) => {
-      if (el.children.length > 0) return false;
+    // 2. Text-based card container suppression
+    const textNodes = Array.from(document.querySelectorAll('h1, h2, h3, h4, span, div')).filter((el) => {
+      if (el.children.length > 0 || el.closest('#asc-model-pill-wrap') || el.id === 'asc-prompt-camera-btn') return false;
       const t = (el.textContent || '').trim();
-      return t === 'AI Features' || t === 'New feature';
+      return t === 'Suggestions' || t === 'AI Features' || t === 'New feature';
     });
-    for (const chip of chips) {
-      let p = chip.parentElement;
-      let box = null;
+
+    for (const node of textNodes) {
+      let curr = node.parentElement;
+      let targetBox = null;
       let depth = 0;
-      while (p && p !== document.body && depth < 6) {
-        if (p.querySelector('textarea, [contenteditable="true"], [role="textbox"]')) break;
-        if ((p.textContent || '').includes('Suggestions')) {
-          box = p;
+
+      while (curr && curr !== document.body && depth < 8) {
+        if (curr.querySelector('textarea, [contenteditable="true"], [role="textbox"], #asc-prompt-camera-btn, #asc-model-pill-wrap')) {
+          break;
         }
-        p = p.parentElement;
+
+        const text = curr.textContent || '';
+        const hasCards = curr.querySelectorAll('button, [role="button"]').length >= 2 ||
+                         text.includes('AI Features') ||
+                         text.includes('New feature');
+        const hasClose = curr.querySelector('button[aria-label*="close" i], button[aria-label*="dismiss" i], svg path[d*="19 6.41"], svg path[d*="M19 6.41"], svg path[d*="M18 6L6 18"]');
+
+        if (hasCards || hasClose) {
+          targetBox = curr;
+        }
+        curr = curr.parentElement;
         depth++;
       }
-      if (box) {
-        box.classList.add('asc-suggestion-hidden');
-        box.style.setProperty('display', 'none', 'important');
+
+      if (targetBox) {
+        targetBox.classList.add('asc-suggestion-hidden');
+        targetBox.style.setProperty('display', 'none', 'important');
       }
     }
   }
 
-  // Continuous Setup with context teardown
+  // --- 13. Continuous Lifecycle Observers & Poller ---
+
   let mainObserver = null;
   let pollInterval = null;
+  let rafDebounce = null;
 
   function teardownIfInvalid() {
     if (!isContextValid()) {
@@ -1099,15 +1077,26 @@
         clearInterval(pollInterval);
         pollInterval = null;
       }
+      if (rafDebounce) {
+        cancelAnimationFrame(rafDebounce);
+        rafDebounce = null;
+      }
       return true;
     }
     return false;
   }
 
+  // High-performance debounced MutationObserver
   mainObserver = new MutationObserver(() => {
     if (teardownIfInvalid()) return;
-    setupPromptBar();
-    scanAndHideSuggestions();
+    if (rafDebounce) return;
+
+    rafDebounce = requestAnimationFrame(() => {
+      rafDebounce = null;
+      if (teardownIfInvalid()) return;
+      setupPromptBar();
+      scanAndHideSuggestions();
+    });
   });
 
   mainObserver.observe(document.body, {
