@@ -39,6 +39,9 @@
         if (!item || typeof item !== 'object') continue;
         const name = item.displayName || item.name || '';
         if (name && typeof name === 'string' && /gemini/i.test(name)) {
+          // Skip floating unversioned pointer aliases like "Gemini Flash Latest"
+          if (/\blatest\b/i.test(name) && !/\d+(\.\d+)?/.test(name)) continue;
+
           candidates.push({
             name: item.displayName || item.name.replace(/^models\//, ''),
             id: item.name ? item.name.replace(/^models\//, '') : '',
@@ -55,11 +58,13 @@
           for (const el of obj) searchNested(el, depth + 1);
         } else if (typeof obj === 'object') {
           if (obj.displayName && typeof obj.displayName === 'string' && /gemini/i.test(obj.displayName)) {
-            candidates.push({
-              name: obj.displayName,
-              id: obj.name ? obj.name.replace(/^models\//, '') : '',
-              description: obj.description || ''
-            });
+            if (!/\blatest\b/i.test(obj.displayName) || /\d+(\.\d+)?/.test(obj.displayName)) {
+              candidates.push({
+                name: obj.displayName,
+                id: obj.name ? obj.name.replace(/^models\//, '') : '',
+                description: obj.description || ''
+              });
+            }
           }
           for (const key of Object.keys(obj)) {
             if (typeof obj[key] === 'object' && obj[key] !== null) {

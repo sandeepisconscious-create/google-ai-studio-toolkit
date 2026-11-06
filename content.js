@@ -30,29 +30,51 @@
 
     if (/^(Select|Cancel|Done|Settings|Apply|Close|Auto)$/i.test(name)) return null;
 
-    // Clean display name: remove "(Paid)", "(Preview)", "(Default)", or trailing tags
-    const cleanName = name.replace(/\s*\((paid|preview|default)\)/gi, '').trim();
-    const displayName = cleanName.length > 0 ? cleanName : name;
-    const key = displayName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    // 1. Filter out unversioned floating aliases like "Gemini Flash Latest" or "Gemini Flash-Lite Latest"
+    if (/\blatest\b/i.test(name) && !/\d+(\.\d+)?/.test(name)) {
+      return null;
+    }
+
+    // 2. If it has "Default (Gemini ...)", unwrap the inner model name
+    const defaultMatch = name.match(/Default\s*\(([^)]+)\)/i);
+    if (defaultMatch && defaultMatch[1]) {
+      name = defaultMatch[1].trim();
+    }
+
+    // 3. Strip concatenated tags like "Paid", "Free", "Beta", "(Paid)", "(Preview)"
+    name = name.replace(/Paid$/i, '')
+               .replace(/\s*\((paid|preview|default|beta|new)\)/gi, '')
+               .replace(/\s+/g, ' ')
+               .trim();
+
+    if (!name || !/gemini/i.test(name)) return null;
+
+    // 4. Generate clean canonical semantic key (e.g. "gemini-4-argon", "gemini-3.8-flash")
+    const key = name.toLowerCase()
+                    .replace(/[^a-z0-9\.]+/g, '-')
+                    .replace(/^-|-$/g, '');
 
     return {
       key,
-      name: displayName,
-      shortName: displayName
+      name,
+      shortName: name
     };
   }
 
   function sortModelsList() {
     currentModels.sort((a, b) => {
-      const aPro = /argon|pro/i.test(a.name);
-      const bPro = /argon|pro/i.test(b.name);
-      if (aPro && !bPro) return -1;
-      if (!aPro && bPro) return 1;
-
+      // 1. Sort by version number descending (e.g. 5 > 4.5 > 4 > 3.8 > 3.6 > 3.5 > 3.1 > 3)
       const aVer = parseFloat((a.name.match(/\d+(\.\d+)?/) || [0])[0]);
       const bVer = parseFloat((b.name.match(/\d+(\.\d+)?/) || [0])[0]);
       if (bVer !== aVer) return bVer - aVer;
 
+      // 2. High-reasoning / Pro / Argon / Ultra models above Flash of the same version
+      const aPro = /argon|pro|ultra/i.test(a.name);
+      const bPro = /argon|pro|ultra/i.test(b.name);
+      if (aPro && !bPro) return -1;
+      if (!aPro && bPro) return 1;
+
+      // 3. Alphabetical tiebreaker
       return a.name.localeCompare(b.name);
     });
   }
@@ -71,14 +93,13 @@
       const entry = normalizeModelEntry(raw);
       if (!entry) continue;
 
-      if (!/gemini/i.test(entry.name)) continue;
-
-      const idx = currentModels.findIndex(m => 
+      // Deduplicate by semantic key or lowercase name
+      const existing = currentModels.find(m => 
         m.key === entry.key || 
         m.name.toLowerCase() === entry.name.toLowerCase()
       );
 
-      if (idx === -1) {
+      if (!existing) {
         currentModels.push(entry);
         hasChange = true;
       }
@@ -167,18 +188,29 @@
     return h > 0 ? `${h}h ${m}m` : `${m}m`;
   }
 
-  // --- 3. Persistent Model Selection ---
+  // --- 3. Persistent Model Selection & Cache Purging ---
+  const CURRENT_CACHE_VERSION = 'v1.6.4';
+
   function loadSavedModel() {
     if (!chrome.storage || !chrome.storage.local) return;
 
-    chrome.storage.local.get(['asc_selected_model', 'asc_chat_model', 'asc_dynamic_models'], (res) => {
-      if (res && res.asc_dynamic_models && Array.isArray(res.asc_dynamic_models) && res.asc_dynamic_models.length > 0) {
+    chrome.storage.local.get(['asc_cache_ver', 'asc_selected_model', 'asc_chat_model', 'asc_dynamic_models'], (res) => {
+      // Purge stale duplicate-riddled cache from previous versions
+      if (!res || res.asc_cache_ver !== CURRENT_CACHE_VERSION) {
+        currentModels = [...BASELINE_MODELS];
+        chrome.storage.local.set({
+          asc_cache_ver: CURRENT_CACHE_VERSION,
+          asc_dynamic_models: currentModels
+        });
+      } else if (res.asc_dynamic_models && Array.isArray(res.asc_dynamic_models) && res.asc_dynamic_models.length > 0) {
         mergeDiscoveredModels(res.asc_dynamic_models);
       }
 
-      const saved = (res && (res.asc_selected_model || res.asc_chat_model)) || '';
-      if (saved && !saved.toLowerCase().startsWith('auto')) {
-        activeModel = saved;
+      const rawSaved = (res && (res.asc_selected_model || res.asc_chat_model)) || '';
+      const normalizedSaved = normalizeModelEntry(rawSaved);
+
+      if (normalizedSaved && !normalizedSaved.name.toLowerCase().startsWith('auto')) {
+        activeModel = normalizedSaved.name;
       } else {
         activeModel = 'Gemini 3.8 Flash';
       }
