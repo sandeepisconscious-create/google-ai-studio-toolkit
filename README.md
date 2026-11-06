@@ -9,7 +9,7 @@ A minimalist, monochromatic Chrome extension designed for power users of **Googl
 > [!NOTE]
 > **Disclaimer**: This is an independent, open-source community project created purely to contribute and make developer workflows easier. It is not affiliated, associated, authorized, endorsed by, or in any way officially connected with Google or any of its subsidiaries.
 
-It adds one-click live applet screenshot capture directly into prompt input, an in-prompt model switcher with quota reset tracking, and smart task auto-routing.
+It adds one-click live applet screenshot capture directly into prompt input, an in-prompt model switcher with persistent selection, and daily quota reset countdown.
 
 ---
 
@@ -20,22 +20,16 @@ It adds one-click live applet screenshot capture directly into prompt input, an 
 - **Direct Prompt Staging**: Automatically attaches the screenshot chip into the prompt input box and copies the image to your clipboard.
 - **Workspace-Safe**: Does not pollute or create temporary files inside your project directory.
 
-### 2. 🎛️ In-Prompt Model Switcher & Dynamic Discovery
+### 2. 🎛️ In-Prompt Model Switcher & Persistent Selection
 - **Accessible Right in Prompt Bar**: Switch models directly from the bottom prompt bar without having to open the right-hand Chat Settings drawer.
+- **Persistent Selection Memory**: Whichever model you select is saved permanently across sessions and tab reloads until you explicitly choose a different one.
 - **Dynamic Model Discovery (No Stale Hardcoded Models)**:
   - **Tier 1 (DOM Inspector)**: Automatically extracts options directly from Google AI Studio's native `Select model to use in Chat` menu.
   - **Tier 2 (Main-World Network Interceptor)**: Sniffs Google's internal `ListModels` API response on startup.
-  - **Tier 3 (Chat History Harvester)**: Automatically discovers newly released models from chat run headers (`• Ran for ...`).
   - **Persistent Local Cache**: Discovered models are saved in `chrome.storage.local` so new models appear seamlessly without requiring extension updates.
-- **Daily Quota Reset Timer**: Live countdown to the daily quota reset (**00:00 Pacific Time**).
-- **Session Usage Counter**: Reads actual chat run history to track how many prompts each model has processed today.
+- **Daily Quota Reset Timer**: Clean countdown to the daily quota reset (**00:00 Pacific Time**) in the dropdown header.
 
-### 3. 🧠 Smart Task Auto-Router
-- When set to **Auto**, the toolkit analyzes prompt complexity on dispatch:
-  - **Complex Tasks**: Architecture, algorithmic logic, refactoring, and multi-file debugging route to **Gemini 4 Argon**.
-  - **Fast Tasks**: Styling, CSS tweaks, UI adjustments, and simple questions route to **Gemini 3.8 / 3.6 Flash**.
-
-### 4. 🎨 Monochromatic & Non-Intrusive Design
+### 3. 🎨 Monochromatic & Non-Intrusive Design
 - Built to match Google AI Studio's native dark interface (`#18191a`, `#282a2c`).
 - Zero intrusive pop-overs, banners, or floating toasts obstructing the prompt box.
 
