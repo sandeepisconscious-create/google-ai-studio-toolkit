@@ -20,6 +20,34 @@
   // Remembered active model (persisted in chrome.storage.local)
   let activeModel = 'Gemini 3.8 Flash';
   let isCapturing = false;
+  let enterToSendEnabled = false;
+
+  // Load Enter to Send preference
+  if (chrome.storage && chrome.storage.local) {
+    chrome.storage.local.get(['asc_enter_to_send'], (res) => {
+      enterToSendEnabled = Boolean(res && res.asc_enter_to_send);
+    });
+  }
+
+  if (chrome.storage && chrome.storage.onChanged) {
+    chrome.storage.onChanged.addListener((changes) => {
+      if (changes.asc_enter_to_send) {
+        enterToSendEnabled = Boolean(changes.asc_enter_to_send.newValue);
+        const menu = document.getElementById('asc-model-dropdown-menu');
+        if (menu) renderModelMenuItems(menu);
+      }
+    });
+  }
+
+  if (chrome.runtime && chrome.runtime.onMessage) {
+    chrome.runtime.onMessage.addListener((msg) => {
+      if (msg && msg.type === 'ASC_ENTER_TO_SEND_CHANGED') {
+        enterToSendEnabled = Boolean(msg.enabled);
+        const menu = document.getElementById('asc-model-dropdown-menu');
+        if (menu) renderModelMenuItems(menu);
+      }
+    });
+  }
 
   // --- 1. Dynamic Model Discovery & Normalization ---
   function normalizeModelEntry(raw) {
@@ -507,6 +535,23 @@
     return null;
   }
 
+  function findSendButton() {
+    const buttons = Array.from(document.querySelectorAll('button, [role="button"]'));
+    for (const b of buttons) {
+      if (b.closest('#asc-model-pill-wrap') || b.id === 'asc-prompt-camera-btn') continue;
+      const aria = (b.getAttribute('aria-label') || '').toLowerCase();
+      const text = (b.textContent || '').trim().toLowerCase();
+      const hasArrow = b.querySelector('svg path[d*="M4 12"], svg path[d*="M2.01 21"], svg path[d*="M12 4"], svg path[d*="M2.01 3"]') ||
+                       text === '↑' || text === 'send' || text === 'run';
+      const isSend = aria.includes('send') || aria.includes('submit') || aria.includes('run');
+
+      if ((hasArrow || isSend) && b.getBoundingClientRect().y > window.innerHeight * 0.4) {
+        return b;
+      }
+    }
+    return null;
+  }
+
   // --- 5. In-Prompt Injection ---
   function setupPromptBar() {
     const plusBtn = findPlusButton();
@@ -638,6 +683,34 @@
 
       menu.appendChild(item);
     });
+
+    // Divider
+    const divider = document.createElement('div');
+    divider.className = 'asc-menu-divider';
+    menu.appendChild(divider);
+
+    // Enter to Send Toggle Row
+    const enterRow = document.createElement('div');
+    enterRow.className = 'asc-enter-to-send-row';
+    enterRow.title = enterToSendEnabled
+      ? 'Press Enter to send (Click to disable)'
+      : 'Press Enter for newline (Click to enable Enter to Send)';
+    enterRow.innerHTML = `
+      <span>Enter to Send</span>
+      <span class="asc-toggle-state ${enterToSendEnabled ? 'on' : 'off'}">${enterToSendEnabled ? 'ON' : 'OFF'}</span>
+    `;
+
+    enterRow.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      enterToSendEnabled = !enterToSendEnabled;
+      if (chrome.storage && chrome.storage.local) {
+        chrome.storage.local.set({ asc_enter_to_send: enterToSendEnabled });
+      }
+      renderModelMenuItems(menu);
+    });
+
+    menu.appendChild(enterRow);
   }
 
   function getShortName(fullName) {
@@ -833,6 +906,34 @@
       "'": '&#039;'
     }[m]));
   }
+
+  // Enter to Send Interception (when enabled)
+  window.addEventListener('keydown', (e) => {
+    if (!enterToSendEnabled) return;
+
+    if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+      const target = e.target;
+      if (!target) return;
+
+      const isPromptInput = target.tagName === 'TEXTAREA' ||
+                            target.isContentEditable ||
+                            target.getAttribute('role') === 'textbox' ||
+                            target.classList.contains('input-area');
+
+      if (isPromptInput && target.getBoundingClientRect().y > window.innerHeight * 0.4) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const sendBtn = findSendButton();
+        if (sendBtn) {
+          sendBtn.click();
+        } else {
+          const fallbackBtn = document.querySelector('button[aria-label*="send" i], button[aria-label*="run" i], button[aria-label*="submit" i]');
+          if (fallbackBtn) fallbackBtn.click();
+        }
+      }
+    }
+  }, true);
 
   // Keyboard Shortcut: Option + S / Alt + S
   window.addEventListener('keydown', (e) => {

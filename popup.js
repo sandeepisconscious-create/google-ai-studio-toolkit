@@ -31,4 +31,27 @@ document.addEventListener('DOMContentLoaded', async () => {
       window.close();
     });
   }
+
+  // Handle Enter to Send Toggle
+  const enterToSendToggle = document.getElementById('enter-to-send-toggle');
+  if (enterToSendToggle && chrome.storage && chrome.storage.local) {
+    chrome.storage.local.get(['asc_enter_to_send'], (res) => {
+      enterToSendToggle.checked = Boolean(res && res.asc_enter_to_send);
+    });
+
+    enterToSendToggle.addEventListener('change', () => {
+      const enabled = enterToSendToggle.checked;
+      chrome.storage.local.set({ asc_enter_to_send: enabled });
+
+      // Notify content script in active tab
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs && tabs[0] && tabs[0].id) {
+          chrome.tabs.sendMessage(tabs[0].id, {
+            type: 'ASC_ENTER_TO_SEND_CHANGED',
+            enabled
+          }).catch(() => {});
+        }
+      });
+    });
+  }
 });

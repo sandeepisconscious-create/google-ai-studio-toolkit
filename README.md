@@ -29,7 +29,12 @@ It adds one-click live applet screenshot capture directly into prompt input, an 
   - **Persistent Local Cache**: Discovered models are saved in `chrome.storage.local` so new models appear seamlessly without requiring extension updates.
 - **Daily Quota Reset Timer**: Clean countdown to the daily quota reset (**00:00 Pacific Time**) in the dropdown header.
 
-### 3. 🎨 Monochromatic & Non-Intrusive Design
+### 3. ⌨️ Enter to Send (Toggleable)
+- **Optional Fast Messaging**: Toggle whether pressing <kbd>Enter</kbd> sends your prompt immediately (<kbd>Shift</kbd>+<kbd>Enter</kbd> for newline) or keeps Google AI Studio's default behavior (<kbd>Enter</kbd> inserts a newline).
+- **Dual Controls**: Toggle it on/off with a single click directly inside the in-prompt model menu or via the extension popup toolbar.
+- **Persistent State**: Defaults to Google's standard behavior (off) and remembers your preferred setting.
+
+### 4. 🎨 Monochromatic & Non-Intrusive Design
 - Built to match Google AI Studio's native dark interface (`#18191a`, `#282a2c`).
 - Zero intrusive pop-overs, banners, or floating toasts obstructing the prompt box.
 
@@ -66,6 +71,8 @@ git clone https://github.com/sandeepisconscious-create/google-ai-studio-toolkit.
 | :--- | :--- |
 | <kbd>Option</kbd> + <kbd>S</kbd> *(macOS)* | Capture applet preview & attach to prompt |
 | <kbd>Alt</kbd> + <kbd>S</kbd> *(Windows / Linux)* | Capture applet preview & attach to prompt |
+| <kbd>Enter</kbd> *(when toggled ON)* | Send message |
+| <kbd>Shift</kbd> + <kbd>Enter</kbd> *(when toggled ON)* | Insert new line |
 
 ---
 
