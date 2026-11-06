@@ -9,40 +9,44 @@ A minimalist, monochromatic Chrome extension designed for power users of **Googl
 > [!NOTE]
 > **Disclaimer**: This is an independent, open-source community project created purely to contribute and make developer workflows easier. It is not affiliated, associated, authorized, endorsed by, or in any way officially connected with Google or any of its subsidiaries.
 
-It adds one-click live applet screenshot capture directly into prompt input, an in-prompt model switcher with persistent selection, and daily quota reset countdown.
+It adds one-click live applet screenshot capture directly into the prompt input, an in-prompt model switcher with persistent selection, a toggleable Enter-to-Send mode, and a daily quota reset countdown.
 
 ---
 
 ## ⚡ Features
 
 ### 1. 📸 In-Prompt Applet Screenshot Capture
-- **One-click staging**: Capture whatever is currently rendered in the live web applet preview by clicking the `[📷]` button right next to `(+)` (or pressing <kbd>Option</kbd> + <kbd>S</kbd> / <kbd>Alt</kbd> + <kbd>S</kbd>).
-- **Direct Prompt Staging**: Automatically attaches the screenshot chip into the prompt input box and copies the image to your clipboard.
-- **Workspace-Safe**: Does not pollute or create temporary files inside your project directory.
+- **One-Click Staging**: Capture whatever is currently rendered in the live web applet preview by clicking the `[📷]` button right next to `(+)` (or pressing <kbd>Option</kbd> + <kbd>S</kbd> / <kbd>Alt</kbd> + <kbd>S</kbd>).
+- **Direct Input Staging**: Automatically attaches the screenshot chip into the prompt input box and copies the image to your clipboard.
+- **Workspace-Safe**: Does not pollute or create temporary files inside your project codebase.
 
 ### 2. 🎛️ In-Prompt Model Switcher & Persistent Selection
-- **Accessible Right in Prompt Bar**: Switch models directly from the bottom prompt bar without having to open the right-hand Chat Settings drawer.
-- **Persistent Selection Memory**: Whichever model you select is saved permanently across sessions and tab reloads until you explicitly choose a different one.
-- **Dynamic Model Discovery (No Stale Hardcoded Models)**:
-  - **Tier 1 (DOM Inspector)**: Automatically extracts options directly from Google AI Studio's native `Select model to use in Chat` menu.
-  - **Tier 2 (Main-World Network Interceptor)**: Sniffs Google's internal `ListModels` API response on startup.
-  - **Persistent Local Cache**: Discovered models are saved in `chrome.storage.local` so new models appear seamlessly without requiring extension updates.
-- **Daily Quota Reset Timer**: Clean countdown to the daily quota reset (**00:00 Pacific Time**) in the dropdown header.
+- **Accessible in Prompt Bar**: Switch models directly from the bottom prompt bar without needing to open the native settings drawer.
+- **Persistent Selection Memory**: Whichever model you select is remembered permanently across sessions and tab reloads until you explicitly choose a different one.
+- **Dual-Layer Synchronization**:
+  - **Native Drawer Driver**: Programmatically selects the model inside Google AI Studio's native `Chat settings` drawer.
+  - **Network Request Override**: A main-world service worker intercepts outgoing prompt requests to ensure Google's backend always executes your chosen model.
+- **Daily Quota Reset Countdown**: Real-time timer countdown to the daily quota reset (**00:00 Pacific Time**) in the menu header.
 
-### 3. ⌨️ Enter to Send (Toggleable)
-- **Optional Fast Messaging**: Toggle whether pressing <kbd>Enter</kbd> sends your prompt immediately (<kbd>Shift</kbd>+<kbd>Enter</kbd> for newline) or keeps Google AI Studio's default behavior (<kbd>Enter</kbd> inserts a newline).
-- **Dual Controls**: Toggle it on/off with a single click directly inside the in-prompt model menu or via the extension popup toolbar.
-- **Persistent State**: Defaults to Google's standard behavior (off) and remembers your preferred setting.
+### 3. 🛡️ Future-Proof Model Discovery & Canonical Deduplication
+- **Dynamic Discovery**: Scans Google AI Studio's native options and API responses so newly released models (e.g. *Gemini 4.5 Pro*, *Gemini 5 Flash*) appear automatically without requiring extension updates.
+- **Alias & Duplicate Filtering**: Automatically drops redundant floating aliases (`Gemini Flash Latest`, `Default (...)`) and strips UI badge text (`Paid`, `Beta`), keeping the dropdown clean and distinct.
+- **Version-Aware Sorting**: New models automatically sort to the top by generation and version number.
 
-### 4. 🎨 Monochromatic & Non-Intrusive Design
-- Built to match Google AI Studio's native dark interface (`#18191a`, `#282a2c`).
-- Zero intrusive pop-overs, banners, or floating toasts obstructing the prompt box.
+### 4. ⌨️ Enter to Send (Toggleable)
+- **Fast Messaging Mode**: Choose whether pressing <kbd>Enter</kbd> sends your prompt immediately (<kbd>Shift</kbd>+<kbd>Enter</kbd> for newline) or keeps Google AI Studio's default behavior (<kbd>Enter</kbd> inserts a newline).
+- **Dual Controls**: Toggle on/off with a single click inside the prompt bar dropdown or from the extension toolbar popup.
+- **Safe Defaults**: Defaults to Google AI Studio's standard multiline behavior until you choose to enable it.
+
+### 5. 🎨 Monochromatic & Native Interface
+- Styled with dark monochromatic tones (`#18191a`, `#282a2c`, `#3c4043`) that seamlessly blend with Google AI Studio's native UI.
+- Zero intrusive pop-overs, floating toasts, or layout shifts over your prompt box.
 
 ---
 
 ## 📥 Installation
 
-Since this extension is open source, anyone can install and run it locally in Chrome, Brave, Edge, or any Chromium browser.
+Anyone can install and run this extension locally in Google Chrome, Brave, Edge, or any Chromium browser.
 
 ### Option A: Clone with Git
 ```bash
@@ -51,7 +55,7 @@ git clone https://github.com/sandeepisconscious-create/google-ai-studio-toolkit.
 
 ### Option B: Download ZIP
 1. Click **Code** > **Download ZIP** on GitHub.
-2. Unzip the folder onto your computer.
+2. Unzip the downloaded folder.
 
 ### Load into Chrome:
 1. Open Google Chrome and navigate to:
@@ -65,14 +69,15 @@ git clone https://github.com/sandeepisconscious-create/google-ai-studio-toolkit.
 
 ---
 
-## ⌨️ Shortcuts
+## ⌨️ Shortcuts & Controls
 
-| Shortcut | Action |
+| Shortcut / Action | Behavior |
 | :--- | :--- |
 | <kbd>Option</kbd> + <kbd>S</kbd> *(macOS)* | Capture applet preview & attach to prompt |
 | <kbd>Alt</kbd> + <kbd>S</kbd> *(Windows / Linux)* | Capture applet preview & attach to prompt |
-| <kbd>Enter</kbd> *(when toggled ON)* | Send message |
-| <kbd>Shift</kbd> + <kbd>Enter</kbd> *(when toggled ON)* | Insert new line |
+| <kbd>Enter</kbd> *(when Enter to Send is ON)* | Send prompt immediately |
+| <kbd>Shift</kbd> + <kbd>Enter</kbd> *(when Enter to Send is ON)* | Insert new line in prompt |
+| <kbd>Enter</kbd> *(when Enter to Send is OFF)* | Insert new line (Google AI Studio default) |
 
 ---
 
@@ -82,12 +87,12 @@ git clone https://github.com/sandeepisconscious-create/google-ai-studio-toolkit.
 google-ai-studio-toolkit/
 ├── manifest.json       # Chrome Manifest V3 configuration
 ├── background.js       # Background tab capture service worker
-├── interceptor.js      # Main-world network listener (dynamic model discovery)
-├── content.js          # Injected UI (camera button, model switcher, auto-router)
-├── content.css         # Dark monochromatic styling
-├── popup.html          # Context-aware browser action popup
-├── popup.css           # Extension popup styles
-├── popup.js            # Popup logic & navigation
+├── interceptor.js      # Main-world network listener & model request override
+├── content.js          # Injected UI (camera button, model switcher, Enter to Send)
+├── content.css         # Monochromatic dark theme styling
+├── popup.html          # Extension toolbar popup with preferences
+├── popup.css           # Popup styles & toggle switch
+├── popup.js            # Popup controller & preference sync
 ├── icons/              # Extension icons (16px, 32px, 48px, 128px)
 ├── LICENSE             # MIT License
 └── README.md           # Documentation
