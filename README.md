@@ -1,12 +1,21 @@
-# Google AI Studio Toolkit
-
 <p align="center">
-  <img src="icons/icon128.png" width="96" height="96" alt="Google AI Studio Toolkit Logo">
+  <img src="icons/logo.png" width="120" height="120" alt="Google AI Studio Toolkit Logo">
 </p>
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Manifest V3](https://img.shields.io/badge/Chrome-Manifest%20V3-4285F4.svg?logo=google-chrome&logoColor=white)](manifest.json)
-[![Platform](https://img.shields.io/badge/Platform-Google%20AI%20Studio-0F9D58.svg)](https://aistudio.google.com)
+<h1 align="center">Google AI Studio Toolkit</h1>
+
+<p align="center">
+  <a href="https://github.com/sandeepisconscious-create/google-ai-studio-toolkit/releases/download/v1.7.0/google-ai-studio-toolkit-v1.7.0.zip">
+    <img src="https://img.shields.io/badge/⬇%EF%B8%8F_Download_Extension_(v1.7.0)-ZIP-2563EB?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Download Extension ZIP">
+  </a>
+</p>
+
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
+  <a href="manifest.json"><img src="https://img.shields.io/badge/Chrome-Manifest%20V3-4285F4.svg?logo=google-chrome&logoColor=white" alt="Manifest V3"></a>
+  <a href="https://github.com/sandeepisconscious-create/google-ai-studio-toolkit/releases/latest"><img src="https://img.shields.io/github/v/release/sandeepisconscious-create/google-ai-studio-toolkit?color=green&label=Latest%20Release" alt="Latest Release"></a>
+  <a href="https://aistudio.google.com"><img src="https://img.shields.io/badge/Platform-Google%20AI%20Studio-0F9D58.svg" alt="Platform"></a>
+</p>
 
 A minimalist, monochromatic Chrome extension designed for power users of **Google AI Studio** (`aistudio.google.com`). 
 
@@ -52,14 +61,14 @@ It adds one-click live applet screenshot capture directly into the prompt input,
 
 Anyone can install and run this extension locally in Google Chrome, Brave, Edge, or any Chromium browser.
 
-### Option A: Clone with Git
+### Option A: Direct Download ZIP (Recommended)
+1. Click the **[⬇️ Download Extension ZIP](https://github.com/sandeepisconscious-create/google-ai-studio-toolkit/releases/download/v1.7.0/google-ai-studio-toolkit-v1.7.0.zip)** button.
+2. Unzip `google-ai-studio-toolkit-v1.7.0.zip` to a folder on your computer.
+
+### Option B: Clone with Git
 ```bash
 git clone https://github.com/sandeepisconscious-create/google-ai-studio-toolkit.git
 ```
-
-### Option B: Download ZIP
-1. Click **Code** > **Download ZIP** on GitHub.
-2. Unzip the downloaded folder.
 
 ### Load into Chrome:
 1. Open Google Chrome and navigate to:
