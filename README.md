@@ -20,16 +20,13 @@ It adds one-click live applet screenshot capture directly into prompt input, an 
 - **Direct Prompt Staging**: Automatically attaches the screenshot chip into the prompt input box and copies the image to your clipboard.
 - **Workspace-Safe**: Does not pollute or create temporary files inside your project directory.
 
-### 2. 🎛️ In-Prompt Model Switcher
+### 2. 🎛️ In-Prompt Model Switcher & Dynamic Discovery
 - **Accessible Right in Prompt Bar**: Switch models directly from the bottom prompt bar without having to open the right-hand Chat Settings drawer.
-- **Accurate Model List**:
-  - `Auto` (Smart Router)
-  - `Gemini 4 Argon` *(Paid)*
-  - `Gemini 3.8 Flash` *(Default)*
-  - `Gemini 3.6 Flash`
-  - `Gemini 3.5 Flash Lite`
-  - `Gemini 3.1 Flash Lite`
-  - `Gemini 3 Flash Preview`
+- **Dynamic Model Discovery (No Stale Hardcoded Models)**:
+  - **Tier 1 (DOM Inspector)**: Automatically extracts options directly from Google AI Studio's native `Select model to use in Chat` menu.
+  - **Tier 2 (Main-World Network Interceptor)**: Sniffs Google's internal `ListModels` API response on startup.
+  - **Tier 3 (Chat History Harvester)**: Automatically discovers newly released models from chat run headers (`• Ran for ...`).
+  - **Persistent Local Cache**: Discovered models are saved in `chrome.storage.local` so new models appear seamlessly without requiring extension updates.
 - **Daily Quota Reset Timer**: Live countdown to the daily quota reset (**00:00 Pacific Time**).
 - **Session Usage Counter**: Reads actual chat run history to track how many prompts each model has processed today.
 
@@ -84,6 +81,7 @@ git clone https://github.com/sandeepisconscious-create/google-ai-studio-toolkit.
 google-ai-studio-toolkit/
 ├── manifest.json       # Chrome Manifest V3 configuration
 ├── background.js       # Background tab capture service worker
+├── interceptor.js      # Main-world network listener (dynamic model discovery)
 ├── content.js          # Injected UI (camera button, model switcher, auto-router)
 ├── content.css         # Dark monochromatic styling
 ├── popup.html          # Context-aware browser action popup

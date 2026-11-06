@@ -4,9 +4,8 @@
 
   console.log('[AI Studio Companion] Initializing companion...');
 
-  // Clean model list (Default removed since Gemini 3.8 Flash is the default)
-  const AI_STUDIO_MODELS = [
-    { key: 'auto', name: 'Auto', shortName: 'Auto', isAuto: true, isPaid: false },
+  // Baseline fallback models (used until dynamic discovery completes)
+  const BASELINE_MODELS = [
     { key: 'gemini-4-argon', name: 'Gemini 4 Argon', shortName: 'Gemini 4 Argon', isAuto: false, isPaid: true },
     { key: 'gemini-3.8-flash', name: 'Gemini 3.8 Flash', shortName: 'Gemini 3.8 Flash', isAuto: false, isPaid: false },
     { key: 'gemini-3.6-flash', name: 'Gemini 3.6 Flash', shortName: 'Gemini 3.6 Flash', isAuto: false, isPaid: false },
@@ -14,6 +13,11 @@
     { key: 'gemini-3.1-flash-lite', name: 'Gemini 3.1 Flash Lite', shortName: 'Gemini 3.1 Flash Lite', isAuto: false, isPaid: false },
     { key: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview', shortName: 'Gemini 3 Flash Preview', isAuto: false, isPaid: false }
   ];
+
+  const AUTO_MODEL = { key: 'auto', name: 'Auto', shortName: 'Auto', isAuto: true, isPaid: false };
+
+  // Live dynamic model registry
+  let currentModels = [AUTO_MODEL, ...BASELINE_MODELS];
 
   let activeModel = 'Auto';
   let isCapturing = false;
@@ -23,6 +27,138 @@
     dayKey: '',
     counts: {}
   };
+
+  // --- Dynamic Model Discovery & Normalization ---
+  function normalizeModelEntry(raw) {
+    if (!raw) return null;
+    let name = typeof raw === 'string' ? raw : (raw.displayName || raw.name || '');
+    name = name.replace(/^models\//, '').trim();
+    if (!name || name.length < 2) return null;
+
+    if (/^(Select|Cancel|Done|Settings|Apply|Close)$/i.test(name)) return null;
+
+    let isPaid = false;
+    if (/\b(paid)\b/i.test(name) || raw.isPaid) {
+      isPaid = true;
+    }
+
+    const cleanName = name.replace(/\s*\((paid|preview|default)\)/gi, '').trim();
+    const displayName = cleanName.length > 0 ? cleanName : name;
+    const key = displayName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+    return {
+      key,
+      name: displayName,
+      shortName: displayName,
+      isAuto: false,
+      isPaid
+    };
+  }
+
+  function sortModelsList() {
+    const auto = currentModels.find(m => m.isAuto) || AUTO_MODEL;
+    const others = currentModels.filter(m => !m.isAuto);
+
+    others.sort((a, b) => {
+      const aPaid = a.isPaid || /argon|pro/i.test(a.name);
+      const bPaid = b.isPaid || /argon|pro/i.test(b.name);
+      if (aPaid && !bPaid) return -1;
+      if (!aPaid && bPaid) return 1;
+
+      const aVer = parseFloat((a.name.match(/\d+(\.\d+)?/) || [0])[0]);
+      const bVer = parseFloat((b.name.match(/\d+(\.\d+)?/) || [0])[0]);
+      if (bVer !== aVer) return bVer - aVer;
+
+      return a.name.localeCompare(b.name);
+    });
+
+    currentModels = [auto, ...others];
+  }
+
+  function saveDynamicModels() {
+    if (chrome.storage && chrome.storage.local) {
+      const toSave = currentModels.filter(m => !m.isAuto);
+      chrome.storage.local.set({ asc_dynamic_models: toSave });
+    }
+  }
+
+  function mergeDiscoveredModels(modelsList) {
+    if (!Array.isArray(modelsList) || modelsList.length === 0) return;
+
+    let hasChange = false;
+    for (const raw of modelsList) {
+      const entry = normalizeModelEntry(raw);
+      if (!entry) continue;
+
+      if (!/gemini/i.test(entry.name) && !entry.isAuto) continue;
+
+      const idx = currentModels.findIndex(m => 
+        m.key === entry.key || 
+        m.name.toLowerCase() === entry.name.toLowerCase()
+      );
+
+      if (idx === -1) {
+        currentModels.push(entry);
+        hasChange = true;
+      } else {
+        if (entry.isPaid && !currentModels[idx].isPaid) {
+          currentModels[idx].isPaid = true;
+          hasChange = true;
+        }
+      }
+    }
+
+    if (hasChange) {
+      sortModelsList();
+      saveDynamicModels();
+
+      const menu = document.getElementById('asc-model-dropdown-menu');
+      if (menu) {
+        renderModelMenuItems(menu);
+      }
+      updatePillLabel();
+    }
+  }
+
+  // Tier 1: DOM Reader from Native Chat Settings
+  function scanNativeSettingsForModels() {
+    const allLabels = Array.from(document.querySelectorAll('*')).filter(el => {
+      return el.children.length === 0 && (el.textContent || '').trim().includes('Select model to use in Chat');
+    });
+
+    for (const label of allLabels) {
+      const container = label.parentElement;
+      if (!container) continue;
+
+      const select = container.querySelector('select');
+      if (select && select.options && select.options.length > 0) {
+        const found = [];
+        for (const opt of select.options) {
+          const t = (opt.text || opt.value || '').trim();
+          if (t) found.push({ name: t });
+        }
+        if (found.length > 0) mergeDiscoveredModels(found);
+      }
+
+      const options = container.querySelectorAll('[role="option"], mat-option');
+      if (options.length > 0) {
+        const found = [];
+        for (const opt of options) {
+          const t = (opt.textContent || '').trim();
+          if (t) found.push({ name: t });
+        }
+        if (found.length > 0) mergeDiscoveredModels(found);
+      }
+    }
+  }
+
+  // Tier 2: Network / Interceptor message listener
+  window.addEventListener('message', (event) => {
+    if (event.source !== window) return;
+    if (event.data && event.data.type === 'ASC_MODELS_DISCOVERED' && Array.isArray(event.data.models)) {
+      mergeDiscoveredModels(event.data.models);
+    }
+  });
 
   // --- 1. Quota Reset Time & Accurate Chat-History Usage Counter ---
   function getPacificDateAndResetSeconds() {
@@ -68,7 +204,10 @@
       return;
     }
 
-    chrome.storage.local.get(['asc_chat_model', 'asc_usage_v2'], (res) => {
+    chrome.storage.local.get(['asc_chat_model', 'asc_usage_v2', 'asc_dynamic_models'], (res) => {
+      if (res && res.asc_dynamic_models && Array.isArray(res.asc_dynamic_models) && res.asc_dynamic_models.length > 0) {
+        mergeDiscoveredModels(res.asc_dynamic_models);
+      }
       if (res && res.asc_chat_model) {
         if (res.asc_chat_model.startsWith('Auto')) {
           activeModel = 'Auto';
@@ -101,7 +240,7 @@
       usageState = { dayKey, counts: {} };
     }
 
-    const matched = AI_STUDIO_MODELS.find(
+    const matched = currentModels.find(
       m => m.name.toLowerCase() === modelName.toLowerCase() ||
            m.shortName.toLowerCase() === modelName.toLowerCase()
     );
@@ -112,7 +251,7 @@
     saveUsageState();
   }
 
-  // Strictly count actual run headers in the chat history
+  // Tier 3: Strictly count actual run headers in chat history & auto-discover new models
   function syncUsageFromChatHistory() {
     const { dayKey } = getPacificDateAndResetSeconds();
     if (usageState.dayKey !== dayKey) {
@@ -121,6 +260,7 @@
 
     const domCounts = {};
     const elements = document.querySelectorAll('div, span, p');
+    const discoveredFromHistory = [];
 
     for (const el of elements) {
       if (el.closest('#asc-model-pill-wrap')) continue;
@@ -128,7 +268,14 @@
       if (el.children.length === 0 && el.textContent) {
         const text = el.textContent.trim();
         if (/(•|\u2022)\s*(Ran for|Running for)/i.test(text)) {
-          for (const m of AI_STUDIO_MODELS) {
+          // Extract model name part preceding the bullet
+          const parts = text.split(/(•|\u2022)/);
+          const rawHeaderModel = parts[0].trim();
+          if (/gemini/i.test(rawHeaderModel)) {
+            discoveredFromHistory.push({ name: rawHeaderModel });
+          }
+
+          for (const m of currentModels) {
             if (m.isAuto) continue;
             if (text.toLowerCase().includes(m.name.toLowerCase())) {
               domCounts[m.key] = (domCounts[m.key] || 0) + 1;
@@ -136,6 +283,10 @@
           }
         }
       }
+    }
+
+    if (discoveredFromHistory.length > 0) {
+      mergeDiscoveredModels(discoveredFromHistory);
     }
 
     let updated = false;
@@ -211,12 +362,16 @@
 
     let chosenModel = 'Gemini 3.8 Flash';
 
+    const proModel = currentModels.find(m => m.isPaid || /argon|pro/i.test(m.name)) || { name: 'Gemini 4 Argon' };
+    const defaultFlash = currentModels.find(m => /3\.8/i.test(m.name)) || currentModels.find(m => /flash/i.test(m.name) && !m.isPaid) || { name: 'Gemini 3.8 Flash' };
+    const fastFlash = currentModels.find(m => /3\.6/i.test(m.name)) || defaultFlash;
+
     if (reasoningScore >= 3 && reasoningScore > uiScore) {
-      chosenModel = 'Gemini 4 Argon';
+      chosenModel = proModel.name;
     } else if (uiScore >= 2 && uiScore >= reasoningScore) {
-      chosenModel = 'Gemini 3.6 Flash';
+      chosenModel = fastFlash.name;
     } else {
-      chosenModel = 'Gemini 3.8 Flash';
+      chosenModel = defaultFlash.name;
     }
 
     recordModelRequest(chosenModel);
@@ -412,6 +567,7 @@
     pillBtn.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
+      scanNativeSettingsForModels();
       syncUsageFromChatHistory();
       renderModelMenuItems(menu);
       menu.classList.toggle('asc-show');
@@ -442,7 +598,7 @@
     `;
     menu.appendChild(header);
 
-    AI_STUDIO_MODELS.forEach((m, idx) => {
+    currentModels.forEach((m, idx) => {
       if (idx === 1) {
         const divider = document.createElement('div');
         divider.className = 'asc-menu-divider';
@@ -480,7 +636,7 @@
   }
 
   function getShortName(fullName) {
-    const matched = AI_STUDIO_MODELS.find(m => m.name.toLowerCase() === fullName.toLowerCase());
+    const matched = currentModels.find(m => m.name.toLowerCase() === fullName.toLowerCase());
     return matched ? matched.shortName : fullName;
   }
 
@@ -706,9 +862,14 @@
     subtree: true
   });
 
+  let tickCount = 0;
   setInterval(() => {
     setupPromptBar();
     syncUsageFromChatHistory();
+    tickCount++;
+    if (tickCount % 3 === 0) {
+      scanNativeSettingsForModels();
+    }
   }, 1000);
 
 })();
