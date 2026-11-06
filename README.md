@@ -6,6 +6,9 @@
 
 A minimalist, monochromatic Chrome extension designed for power users of **Google AI Studio** (`aistudio.google.com`). 
 
+> [!NOTE]
+> **Disclaimer**: This is an independent, open-source community project created purely to contribute and make developer workflows easier. It is not affiliated, associated, authorized, endorsed by, or in any way officially connected with Google or any of its subsidiaries.
+
 It adds one-click live applet screenshot capture directly into prompt input, an in-prompt model switcher with quota reset tracking, and smart task auto-routing.
 
 ---
@@ -103,6 +106,14 @@ Feel free to open an issue or submit a pull request:
 3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the Branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
+
+---
+
+## ⚠️ Disclaimer
+
+This project is an independent open-source contribution developed solely to enhance developer productivity and make everyday workflows in Google AI Studio easier. 
+
+It has **no official connection, sponsorship, or affiliation with Google LLC**. "Google" and "Google AI Studio" are trademarks of Google LLC.
 
 ---
 
