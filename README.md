@@ -17,12 +17,25 @@
   <a href="https://aistudio.google.com"><img src="https://img.shields.io/badge/Platform-Google%20AI%20Studio-0F9D58.svg" alt="Platform"></a>
 </p>
 
-A minimalist, monochromatic Chrome extension designed for power users of **Google AI Studio** (`aistudio.google.com`). 
+<p align="center">
+  <strong>An all-in-one productivity Chrome extension for Google AI Studio that eliminates daily workflow friction by bringing instant applet screenshots, in-prompt model switching, suggestion suppression, and customizable messaging controls right into your prompt bar.</strong>
+</p>
 
 > [!NOTE]
 > **Disclaimer**: This is an independent, open-source community project created purely to contribute and make developer workflows easier. It is not affiliated, associated, authorized, endorsed by, or in any way officially connected with Google or any of its subsidiaries.
 
-It adds one-click live applet screenshot capture directly into the prompt input, an in-prompt model switcher with persistent selection, a toggleable Enter-to-Send mode, and a daily quota reset countdown.
+---
+
+## 🎯 Pain Points & How This Toolkit Solves Them
+
+| Friction Point in Native Google AI Studio | How Google AI Studio Toolkit Solves It |
+| :--- | :--- |
+| **📸 Clunky Applet UI Debugging**<br>When an AI-generated applet has a visual glitch or broken layout, you have to capture an OS screenshot, crop it, save it locally, browse for the file, and upload it back into the chat. | **One-Click In-Prompt Screenshot (<kbd>Option</kbd>+<kbd>S</kbd>)**<br>Injects a camera button `[📷]` right next to `(+)`. One click immediately crops the live preview iframe, stages it directly into the prompt box as an image chip, and copies it to clipboard without polluting your disk. |
+| **🎛️ Buried Model Settings & Forgotten Selections**<br>Switching models natively requires opening the right-hand settings drawer, scrolling through options, and re-selecting every time you open a new tab or chat. | **In-Prompt Model Switcher & Permanent Memory**<br>Places a switcher right inside the prompt bar with an active checkmark (`✓`). Your choice is saved permanently and automatically synchronized across all open AI Studio tabs via UI automation and network interception. |
+| **🚫 Annoying Suggestion Cards Reappearing**<br>Large "Suggestions" prompt cards repeatedly pop up above the prompt input across chats and reloads, cluttering your screen and pushing chat history up. | **One-Click Hide Suggestions Toggle**<br>Automatically suppresses suggestion card containers via instant CSS rules and active DOM observers, with an on/off toggle in the extension popup. |
+| **⌨️ Inflexible Message Submission (<kbd>Enter</kbd> vs. Multiline)**<br>Developers who prefer pressing <kbd>Enter</kbd> to send messages quickly are stuck with Google AI Studio's default behavior (<kbd>Enter</kbd> only inserts a newline). | **Toggleable Enter to Send Mode**<br>Toggle between fast message submission on <kbd>Enter</kbd> (<kbd>Shift</kbd>+<kbd>Enter</kbd> for newline) or native multiline mode directly from the extension toolbar popup. |
+| **⏱️ Unpredictable Quota Resets**<br>Free-tier rate limits reset at Midnight Pacific Time, but Google AI Studio never shows a timer, leaving developers guessing when their requests will unblock. | **Real-Time Quota Countdown**<br>The model menu header displays an active countdown timer to Midnight PT (`Resets in Xh Ym`), so you always know when quota refreshes. |
+| **🛡️ Extension Breakage on New Model Releases**<br>Extensions with hardcoded model lists break every time Google updates Gemini versions (e.g. Gemini 4, Flash Lite, Pro). | **Dynamic Model Discovery Engine**<br>Dynamically scans native UI and API payloads, canonicalizes model keys, filters duplicate aliases, and auto-sorts new models to the top without requiring extension updates. |
 
 ---
 
