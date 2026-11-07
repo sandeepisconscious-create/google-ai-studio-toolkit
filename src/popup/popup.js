@@ -2,13 +2,11 @@
 document.addEventListener('DOMContentLoaded', async () => {
   'use strict';
 
-  const statusPill = document.getElementById('status-pill');
   const gearBtn = document.getElementById('gear-btn');
   const openStudioBtn = document.getElementById('open-studio-btn');
   const viewActiveMain = document.getElementById('view-active-main');
   const viewSettings = document.getElementById('view-settings');
   const viewInactive = document.getElementById('view-inactive');
-  const openSettingsRowBtn = document.getElementById('open-settings-row-btn');
   const backToMainBtn = document.getElementById('back-to-main-btn');
 
   const updateBanner = document.getElementById('update-banner');
@@ -81,17 +79,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const isStudio = Boolean(tab?.url?.includes('aistudio.google.com'));
 
     if (isStudio) {
-      statusPill.textContent = 'Active';
-      statusPill.classList.add('active');
       if (gearBtn) gearBtn.style.display = 'inline-flex';
       showActiveMain();
     } else {
-      statusPill.textContent = 'Inactive';
-      statusPill.classList.remove('active');
       showInactive();
     }
   } catch (e) {
-    statusPill.textContent = 'Standby';
     showInactive();
   }
 
@@ -104,10 +97,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         showSettings();
       }
     });
-  }
-
-  if (openSettingsRowBtn) {
-    openSettingsRowBtn.addEventListener('click', showSettings);
   }
 
   if (backToMainBtn) {

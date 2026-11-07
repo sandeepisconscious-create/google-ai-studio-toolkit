@@ -11,16 +11,15 @@
     <div class="popup-header">
       <div class="popup-title-group">
         <img src="../../icons/icon32.png" class="popup-icon" alt="Logo">
-        <span class="popup-title">Google AI Studio Toolkit</span>
+        <span class="popup-title">AI Studio Toolkit</span>
       </div>
       <div class="popup-header-actions">
-        <!-- Settings Gear Button (Only visible when active on AI Studio) -->
-        <button type="button" class="gear-btn" id="gear-btn" title="AI Studio Settings" style="display: none;">
+        <!-- Settings Gear Button (Only visible on AI Studio) -->
+        <button type="button" class="gear-btn" id="gear-btn" title="Settings" style="display: none;">
           <svg viewBox="0 0 24 24" class="gear-svg">
             <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
           </svg>
         </button>
-        <span class="status-pill" id="status-pill">Checking...</span>
       </div>
     </div>
 
@@ -28,52 +27,52 @@
     <div class="update-banner" id="update-banner" style="display: none;">
       <div class="update-info">
         <span class="update-badge">Update Available</span>
-        <span class="update-version" id="update-version-label">v1.9.6</span>
+        <span class="update-version" id="update-version-label">v1.9.7</span>
       </div>
       <a href="#" class="update-btn" id="update-download-btn" target="_blank">Download</a>
     </div>
 
-    <!-- Active View 1: Main Quick Guide (Shown on AI Studio) -->
+    <!-- Active View 1: Main Shortcuts (Shown on AI Studio) -->
     <div class="view-panel" id="view-active-main" style="display: none;">
-      <div class="info-card">
-        <div class="info-item">
-          <div>
-            <div class="info-heading">Applet Screenshot</div>
-            <div class="info-desc">Press <kbd>Option</kbd>+<kbd>S</kbd> or click 📷 next to (+)</div>
+      <div class="shortcut-list">
+        <div class="shortcut-row">
+          <div class="shortcut-info">
+            <span class="shortcut-name">Applet Screenshot</span>
+            <span class="shortcut-hint">Click 📷 in prompt bar</span>
+          </div>
+          <div class="shortcut-keys">
+            <kbd>Option</kbd><span class="key-plus">+</span><kbd>S</kbd>
           </div>
         </div>
-        <div class="info-item">
-          <div>
-            <div class="info-heading">Model Switcher</div>
-            <div class="info-desc">Press <kbd>Option</kbd>+<kbd>M</kbd> or click the model pill in prompt</div>
+        <div class="shortcut-divider"></div>
+        <div class="shortcut-row">
+          <div class="shortcut-info">
+            <span class="shortcut-name">Model Switcher</span>
+            <span class="shortcut-hint">Click pill in prompt bar</span>
+          </div>
+          <div class="shortcut-keys">
+            <kbd>Option</kbd><span class="key-plus">+</span><kbd>M</kbd>
           </div>
         </div>
       </div>
-      <button type="button" class="open-settings-row-btn" id="open-settings-row-btn">
-        <span>Preferences &amp; Settings</span>
-        <svg viewBox="0 0 24 24" style="width: 14px; height: 14px; fill: currentColor;">
-          <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/>
-        </svg>
-      </button>
     </div>
 
-    <!-- Active View 2: Settings Panel (Scoped Strictly to AI Studio) -->
+    <!-- Active View 2: Settings Panel -->
     <div class="view-panel" id="view-settings" style="display: none;">
       <div class="settings-card">
         <div class="settings-top-row">
-          <button type="button" class="back-btn" id="back-to-main-btn" title="Back">
-            <svg viewBox="0 0 24 24" style="width: 14px; height: 14px; fill: currentColor;">
-              <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
-            </svg>
-            <span>Back</span>
-          </button>
           <span class="settings-title">Preferences</span>
+          <button type="button" class="close-settings-btn" id="back-to-main-btn" title="Close">
+            <svg viewBox="0 0 24 24" class="close-svg">
+              <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+            </svg>
+          </button>
         </div>
 
         <div class="toggle-row">
           <div class="toggle-info">
             <div class="toggle-title">Hide Suggestions</div>
-            <div class="toggle-desc">Hide suggestion cards above prompt bar</div>
+            <div class="toggle-desc">Suppress suggestion chips above prompt</div>
           </div>
           <label class="switch">
             <input type="checkbox" id="hide-suggestions-toggle">
@@ -86,7 +85,7 @@
         <div class="toggle-row">
           <div class="toggle-info">
             <div class="toggle-title">Enter to Send</div>
-            <div class="toggle-desc"><kbd>Enter</kbd> sends prompt, <kbd>Shift</kbd>+<kbd>Enter</kbd> for newline</div>
+            <div class="toggle-desc"><kbd>Enter</kbd> sends, <kbd>Shift</kbd>+<kbd>Enter</kbd> for newline</div>
           </div>
           <label class="switch">
             <input type="checkbox" id="enter-to-send-toggle">
@@ -99,14 +98,14 @@
         <div class="update-check-row">
           <div class="toggle-info">
             <div class="toggle-title">Auto-Update Check</div>
-            <div class="toggle-desc" id="update-status-desc">Version v1.9.6 • Checking...</div>
+            <div class="toggle-desc" id="update-status-desc">v1.9.7 • Up to date</div>
           </div>
           <button type="button" class="check-update-btn" id="check-update-btn">Check</button>
         </div>
       </div>
     </div>
 
-    <!-- Inactive View 3: Clean Inactive State (Shown on any non-AI Studio page) -->
+    <!-- Inactive View 3: Clean Standby State (Shown on non-AI Studio page) -->
     <div class="view-panel" id="view-inactive" style="display: none;">
       <div class="inactive-card">
         <div class="inactive-icon">
@@ -114,8 +113,8 @@
             <path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/>
           </svg>
         </div>
-        <div class="inactive-title">Toolkit Inactive</div>
-        <div class="inactive-desc">This toolkit is designed exclusively for Google AI Studio. Open a project to activate prompt tools and controls.</div>
+        <div class="inactive-title">Toolkit Standby</div>
+        <div class="inactive-desc">Open Google AI Studio to use prompt shortcuts and controls.</div>
         <button type="button" class="open-studio-btn" id="open-studio-btn">
           Open Google AI Studio
         </button>

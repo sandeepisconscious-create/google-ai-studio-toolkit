@@ -605,9 +605,79 @@
     return null;
   }
 
+  // --- 8b. Prompt Input Validation & Controls Visibility ---
+
+  function isPromptInputActiveAndVisible() {
+    // 1. Only run within Google AI Studio
+    if (window.location.hostname !== 'aistudio.google.com') {
+      return false;
+    }
+
+    // 2. Hide when viewing an applet in full-screen mode or when assistant is hidden
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('fullscreenApplet') === 'true' || urlParams.get('showAssistant') === 'false') {
+      return false;
+    }
+
+    // 3. Prompt text field must exist
+    const input = findPromptInputElement();
+    if (!input) {
+      return false;
+    }
+
+    // 4. Prompt text field must be enabled (not disabled or aria-disabled)
+    if (input.disabled === true || input.getAttribute('aria-disabled') === 'true' || input.getAttribute('contenteditable') === 'false') {
+      return false;
+    }
+
+    // 5. Prompt text field must have rendered dimensions and not be visually hidden
+    const rect = input.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) {
+      return false;
+    }
+
+    const style = window.getComputedStyle(input);
+    if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') {
+      return false;
+    }
+
+    // 6. Must be within the visible viewport bounds
+    if (rect.bottom <= 0 || rect.top >= window.innerHeight || rect.right <= 0 || rect.left >= window.innerWidth) {
+      return false;
+    }
+
+    return true;
+  }
+
+  function setInjectedControlsVisibility(visible) {
+    const cameraBtn = document.getElementById('asc-prompt-camera-btn');
+    if (cameraBtn) {
+      cameraBtn.style.setProperty('display', visible ? '' : 'none', 'important');
+    }
+
+    const modelWrap = document.getElementById('asc-model-pill-wrap');
+    if (modelWrap) {
+      modelWrap.style.setProperty('display', visible ? '' : 'none', 'important');
+    }
+
+    if (!visible) {
+      const menu = document.getElementById('asc-model-dropdown-menu');
+      if (menu) {
+        menu.classList.remove('asc-show');
+      }
+    }
+  }
+
   // --- 9. In-Prompt Injection ---
 
   function setupPromptBar() {
+    if (!isPromptInputActiveAndVisible()) {
+      setInjectedControlsVisibility(false);
+      return;
+    }
+
+    setInjectedControlsVisibility(true);
+
     const plusBtn = findPlusButton();
     const modeBtn = findDefaultModeButton();
 
@@ -986,6 +1056,7 @@
   // Shortcut: Option + S / Alt + S -> Capture Applet Screenshot
   window.addEventListener('keydown', (e) => {
     if (e.altKey && (e.key === 's' || e.key === 'S' || e.code === 'KeyS')) {
+      if (!isPromptInputActiveAndVisible()) return;
       e.preventDefault();
       captureAppletScreenshot();
     }
@@ -994,6 +1065,7 @@
   // Shortcut: Option + M / Alt + M -> Toggle Model Switcher Menu
   window.addEventListener('keydown', (e) => {
     if (e.altKey && (e.key === 'm' || e.key === 'M' || e.code === 'KeyM')) {
+      if (!isPromptInputActiveAndVisible()) return;
       e.preventDefault();
       const menu = document.getElementById('asc-model-dropdown-menu');
       if (menu) {
@@ -1002,6 +1074,11 @@
         menu.classList.toggle('asc-show');
       }
     }
+  });
+
+  // Re-check UI visibility when navigating or changing URL state
+  window.addEventListener('popstate', () => {
+    setupPromptBar();
   });
 
   // --- 12. Hide Suggestions Scanner ---

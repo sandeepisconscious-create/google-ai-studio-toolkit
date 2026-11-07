@@ -1,37 +1,42 @@
+/* Google AI Studio Toolkit - Modern Minimal Popup Styles */
+
 body {
   margin: 0;
   padding: 0;
-  width: 290px;
-  background-color: #18191a;
+  width: 272px;
+  background-color: #131416;
   color: #e3e3e3;
-  font-family: 'Google Sans', Roboto, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Google Sans Flex', 'Google Sans', -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
   user-select: none;
+  -webkit-font-smoothing: antialiased;
 }
 
 .popup-box {
-  padding: 14px 16px;
+  padding: 12px 14px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
+  box-sizing: border-box;
 }
 
+/* Header */
 .popup-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid #2b2c2e;
-  padding-bottom: 10px;
+  padding-bottom: 9px;
+  border-bottom: 1px solid #232529;
 }
 
 .popup-title-group {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
 }
 
 .popup-icon {
-  width: 20px;
-  height: 20px;
+  width: 17px;
+  height: 17px;
   object-fit: contain;
   border-radius: 4px;
 }
@@ -39,16 +44,16 @@ body {
 .popup-title {
   font-size: 13px;
   font-weight: 600;
-  color: #ffffff;
+  color: #f1f3f4;
+  letter-spacing: -0.2px;
 }
 
 .popup-header-actions {
   display: flex;
   align-items: center;
-  gap: 6px;
 }
 
-/* Monochromatic Gear Settings Button */
+/* Monochromatic Settings Gear Button */
 .gear-btn {
   display: inline-flex;
   align-items: center;
@@ -57,7 +62,7 @@ body {
   height: 24px;
   background: transparent;
   border: 1px solid transparent;
-  border-radius: 4px;
+  border-radius: 6px;
   color: #9aa0a6;
   cursor: pointer;
   padding: 0;
@@ -65,14 +70,14 @@ body {
 }
 
 .gear-btn:hover {
-  background-color: #282a2c;
-  border-color: #3c4043;
+  background-color: #222428;
+  border-color: #2f3238;
   color: #ffffff;
 }
 
 .gear-btn.active {
-  background-color: #2b2c2f;
-  border-color: #5f6368;
+  background-color: #26292f;
+  border-color: #3d414a;
   color: #ffffff;
 }
 
@@ -82,38 +87,23 @@ body {
   fill: currentColor;
 }
 
-.status-pill {
-  font-size: 10px;
-  padding: 2px 8px;
-  border-radius: 10px;
-  background-color: #252628;
-  color: #9aa0a6;
-  border: 1px solid #3c4043;
-  font-weight: 500;
-}
-
-.status-pill.active {
-  color: #e3e3e3;
-  border-color: #5f6368;
-}
-
 /* Update Banner */
 .update-banner {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background-color: #1e2638;
-  border: 1px solid #3b82f6;
+  background-color: #172033;
+  border: 1px solid #2563eb;
   border-radius: 8px;
-  padding: 8px 10px;
+  padding: 7px 10px;
   gap: 8px;
-  animation: fadeIn 0.15s ease-out;
+  animation: ascFadeIn 0.15s ease-out;
 }
 
 .update-info {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
 }
 
 .update-badge {
@@ -133,8 +123,8 @@ body {
 .update-btn {
   background-color: #2563eb;
   color: #ffffff;
-  padding: 4px 9px;
-  border-radius: 4px;
+  padding: 3px 8px;
+  border-radius: 5px;
   font-size: 11px;
   font-weight: 600;
   text-decoration: none;
@@ -146,127 +136,149 @@ body {
   background-color: #1d4ed8;
 }
 
-/* Info Card */
-.info-card {
+/* Active View 1: Modern Minimal Shortcut List */
+.shortcut-list {
+  background-color: #1a1b1e;
+  border: 1px solid #27292e;
+  border-radius: 9px;
+  padding: 8px 10px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  background-color: #202123;
-  border: 1px solid #3c4043;
-  border-radius: 8px;
-  padding: 10px 12px;
+  gap: 6px;
 }
 
-.info-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-}
-
-.info-heading {
-  font-size: 12px;
-  font-weight: 600;
-  color: #ffffff;
-}
-
-.info-desc {
-  font-size: 11px;
-  color: #9aa0a6;
-  margin-top: 2px;
-  line-height: 1.4;
-}
-
-kbd {
-  background-color: #18191a;
-  border: 1px solid #3c4043;
-  border-radius: 4px;
-  padding: 1px 4px;
-  font-size: 10px;
-  font-family: monospace;
-  color: #e3e3e3;
-}
-
-/* Open Settings Button in Active View */
-.open-settings-row-btn {
+.shortcut-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  width: 100%;
-  margin-top: 8px;
-  padding: 8px 12px;
-  background-color: #202123;
-  border: 1px solid #3c4043;
-  border-radius: 8px;
-  color: #c4c7c5;
-  font-size: 11px;
+  gap: 8px;
+  padding: 2px 0;
+}
+
+.shortcut-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.shortcut-name {
+  font-size: 12px;
   font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  font-family: inherit;
+  color: #e8eaed;
+  line-height: 1.2;
 }
 
-.open-settings-row-btn:hover {
-  background-color: #282a2c;
-  border-color: #5f6368;
-  color: #ffffff;
+.shortcut-hint {
+  font-size: 10px;
+  color: #80868b;
+  margin-top: 2px;
+  line-height: 1.2;
 }
 
-/* Preferences / Settings Card */
+.shortcut-divider {
+  height: 1px;
+  background-color: #25272c;
+  margin: 1px 0;
+}
+
+.shortcut-keys {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 19px;
+  min-width: 19px;
+  padding: 0 4px;
+  background-color: #23252a;
+  border: 1px solid #363940;
+  border-bottom: 2px solid #2b2e35;
+  border-radius: 4px;
+  font-size: 10px;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Mono', Monaco, monospace;
+  font-weight: 500;
+  color: #d1d5db;
+  box-sizing: border-box;
+}
+
+.key-plus {
+  font-size: 10px;
+  color: #6b7280;
+  margin: 0 1px;
+  user-select: none;
+}
+
+/* Active View 2: Preferences & Settings Card */
 .settings-card {
-  background-color: #202123;
-  border: 1px solid #3c4043;
-  border-radius: 8px;
-  padding: 10px 12px;
+  background-color: #1a1b1e;
+  border: 1px solid #27292e;
+  border-radius: 9px;
+  padding: 9px 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  animation: ascFadeIn 0.12s ease-out;
 }
 
 .settings-top-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 10px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #2b2c2e;
-}
-
-.back-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  background: transparent;
-  border: none;
-  color: #9aa0a6;
-  font-size: 11px;
-  cursor: pointer;
-  padding: 2px 4px;
-  border-radius: 4px;
-  font-family: inherit;
-  transition: all 0.15s ease;
-}
-
-.back-btn:hover {
-  background-color: #282a2c;
-  color: #ffffff;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #25272c;
+  margin-bottom: 1px;
 }
 
 .settings-title {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
-  color: #ffffff;
+  color: #8a8f98;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.6px;
+}
+
+.close-settings-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  background: transparent;
+  border: none;
+  color: #80868b;
+  cursor: pointer;
+  padding: 0;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.close-settings-btn:hover {
+  background-color: #26282e;
+  color: #ffffff;
+}
+
+.close-svg {
+  width: 13px;
+  height: 13px;
+  fill: currentColor;
 }
 
 .toggle-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 8px;
+  padding: 1px 0;
 }
 
 .toggle-divider {
   height: 1px;
-  background-color: #2b2c2e;
-  margin: 10px 0;
+  background-color: #25272c;
+  margin: 1px 0;
 }
 
 .toggle-info {
@@ -275,24 +287,32 @@ kbd {
 }
 
 .toggle-title {
-  font-size: 12px;
-  font-weight: 600;
-  color: #ffffff;
+  font-size: 11px;
+  font-weight: 500;
+  color: #e8eaed;
 }
 
 .toggle-desc {
-  font-size: 11px;
-  color: #9aa0a6;
+  font-size: 10px;
+  color: #80868b;
   margin-top: 2px;
-  line-height: 1.3;
+  line-height: 1.25;
 }
 
-/* Monochromatic Toggle Switch */
+.toggle-desc kbd {
+  height: 15px;
+  min-width: 15px;
+  padding: 0 3px;
+  font-size: 9px;
+  vertical-align: baseline;
+}
+
+/* Modern Compact Toggle Switch */
 .switch {
   position: relative;
   display: inline-block;
-  width: 36px;
-  height: 20px;
+  width: 30px;
+  height: 17px;
   flex-shrink: 0;
 }
 
@@ -309,50 +329,50 @@ kbd {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #282a2c;
-  border: 1px solid #484a4d;
-  transition: 0.2s;
-  border-radius: 20px;
+  background-color: #27292e;
+  border: 1px solid #383b42;
+  border-radius: 17px;
+  transition: all 0.18s ease;
 }
 
 .slider:before {
   position: absolute;
   content: "";
-  height: 14px;
-  width: 14px;
+  height: 11px;
+  width: 11px;
   left: 2px;
   bottom: 2px;
-  background-color: #8e918f;
-  transition: 0.2s;
+  background-color: #8a8f98;
   border-radius: 50%;
+  transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.18s ease;
 }
 
 input:checked + .slider {
-  background-color: #3c4043;
-  border-color: #5f6368;
+  background-color: #2563eb;
+  border-color: #3b82f6;
 }
 
 input:checked + .slider:before {
-  transform: translateX(16px);
+  transform: translateX(13px);
   background-color: #ffffff;
 }
 
-/* Update Check Row */
 .update-check-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 8px;
+  padding: 1px 0;
 }
 
 .check-update-btn {
-  padding: 4px 10px;
-  background-color: #282a2c;
-  border: 1px solid #3c4043;
-  color: #e3e3e3;
-  border-radius: 4px;
-  font-size: 11px;
+  background-color: #24262c;
+  border: 1px solid #363941;
+  color: #d1d5db;
+  font-size: 10px;
   font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 4px;
   cursor: pointer;
   transition: all 0.15s ease;
   font-family: inherit;
@@ -360,54 +380,66 @@ input:checked + .slider:before {
 }
 
 .check-update-btn:hover {
-  background-color: #37393d;
-  border-color: #5f6368;
+  background-color: #2e3138;
+  border-color: #4a4e57;
   color: #ffffff;
 }
 
-/* Inactive Card Styling */
+/* Inactive Standby View */
 .inactive-card {
+  background-color: #1a1b1e;
+  border: 1px solid #27292e;
+  border-radius: 9px;
+  padding: 14px 12px;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: 8px;
-  background-color: #202123;
-  border: 1px solid #3c4043;
-  border-radius: 8px;
-  padding: 16px 14px;
+  gap: 6px;
+  animation: ascFadeIn 0.15s ease-out;
+}
+
+.inactive-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background-color: #222429;
+  border: 1px solid #2d3036;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #80868b;
+  margin-bottom: 2px;
 }
 
 .inactive-icon svg {
-  width: 24px;
-  height: 24px;
-  fill: #8e918f;
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
 }
 
 .inactive-title {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
-  color: #ffffff;
+  color: #f1f3f4;
 }
 
 .inactive-desc {
-  font-size: 11px;
-  color: #9aa0a6;
-  line-height: 1.4;
-  margin-bottom: 4px;
+  font-size: 10px;
+  color: #80868b;
+  line-height: 1.35;
+  max-width: 220px;
 }
 
 .open-studio-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   width: 100%;
-  padding: 8px 12px;
-  background-color: #2b2c2f;
-  color: #ffffff;
-  border: 1px solid #484a4d;
+  margin-top: 6px;
+  padding: 6px 12px;
+  background-color: #2563eb;
+  border: none;
   border-radius: 6px;
-  font-size: 12px;
+  color: #ffffff;
+  font-size: 11px;
   font-weight: 500;
   cursor: pointer;
   transition: background-color 0.15s ease;
@@ -415,11 +447,16 @@ input:checked + .slider:before {
 }
 
 .open-studio-btn:hover {
-  background-color: #37393d;
-  border-color: #5f6368;
+  background-color: #1d4ed8;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-4px); }
-  to { opacity: 1; transform: translateY(0); }
+@keyframes ascFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
