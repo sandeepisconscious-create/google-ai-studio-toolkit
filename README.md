@@ -5,8 +5,8 @@
 <h1 align="center">Google AI Studio Toolkit</h1>
 
 <p align="center">
-  <a href="https://github.com/sandeepisconscious-create/google-ai-studio-toolkit/releases/download/v1.9.4/google-ai-studio-toolkit-v1.9.4.zip">
-    <img src="https://img.shields.io/badge/⬇%EF%B8%8F_Download_Extension_(v1.9.4)-ZIP-2563EB?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Download Extension ZIP">
+  <a href="https://github.com/sandeepisconscious-create/google-ai-studio-toolkit/releases/download/v1.9.5/google-ai-studio-toolkit-v1.9.5.zip">
+    <img src="https://img.shields.io/badge/⬇%EF%B8%8F_Download_Extension_(v1.9.5)-ZIP-2563EB?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Download Extension ZIP">
   </a>
 </p>
 
@@ -20,9 +20,6 @@
 <p align="center">
   <strong>An all-in-one productivity Chrome extension for Google AI Studio that eliminates daily workflow friction by bringing instant applet screenshots, in-prompt model switching, suggestion suppression, and customizable messaging controls right into your prompt bar.</strong>
 </p>
-
-> [!NOTE]
-> **Disclaimer**: This is an independent, open-source community project created purely to contribute and make developer workflows easier. It is not affiliated, associated, authorized, endorsed by, or in any way officially connected with Google or any of its subsidiaries.
 
 ---
 
@@ -82,8 +79,8 @@
 Anyone can install and run this extension locally in Google Chrome, Brave, Edge, or any Chromium browser.
 
 ### Option A: Direct Download ZIP (Recommended)
-1. Click the **[⬇️ Download Extension ZIP](https://github.com/sandeepisconscious-create/google-ai-studio-toolkit/releases/download/v1.9.4/google-ai-studio-toolkit-v1.9.4.zip)** button.
-2. Unzip `google-ai-studio-toolkit-v1.9.4.zip` to a folder on your computer.
+1. Click the **[⬇️ Download Extension ZIP](https://github.com/sandeepisconscious-create/google-ai-studio-toolkit/releases/download/v1.9.5/google-ai-studio-toolkit-v1.9.5.zip)** button.
+2. Unzip `google-ai-studio-toolkit-v1.9.5.zip` to a folder on your computer.
 
 ### Option B: Clone with Git
 ```bash
@@ -121,17 +118,21 @@ git clone https://github.com/sandeepisconscious-create/google-ai-studio-toolkit.
 
 ```text
 google-ai-studio-toolkit/
-├── manifest.json       # Chrome Manifest V3 configuration
-├── background.js       # Background tab capture service worker
-├── interceptor.js      # Main-world network listener & model request override
-├── content.js          # Injected UI (camera button, model switcher, Enter to Send)
-├── content.css         # Monochromatic dark theme styling
-├── popup.html          # Extension toolbar popup with preferences
-├── popup.css           # Popup styles & toggle switch
-├── popup.js            # Popup controller & preference sync
-├── icons/              # Extension icons (16px, 32px, 48px, 128px)
-├── LICENSE             # MIT License
-└── README.md           # Documentation
+├── manifest.json                  # Chrome Manifest V3 configuration
+├── icons/                         # Extension icons (16px, 32px, 48px, 128px, logo)
+├── src/
+│   ├── background/
+│   │   └── service-worker.js      # Background tab capture & shortcut command handler
+│   ├── content/
+│   │   ├── content.js             # Injected UI (camera button, model switcher, Enter to Send)
+│   │   ├── content.css            # Clean monochromatic dark theme styling
+│   │   └── interceptor.js         # Main-world fetch/XHR interceptor & dynamic model discovery
+│   └── popup/
+│       ├── popup.html             # Extension toolbar popup interface
+│       ├── popup.css              # Popup styles & toggle switch
+│       └── popup.js               # Popup controller & preference sync
+├── LICENSE                        # MIT License
+└── README.md                      # Documentation
 ```
 
 ---

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Google AI Studio Toolkit",
-  "version": "1.9.4",
+  "version": "1.9.5",
   "description": "Productivity toolkit for Google AI Studio: Applet capture, in-prompt model switching, hide suggestions, Enter to Send toggle, and dynamic model discovery.",
   "permissions": [
     "activeTab",
@@ -22,7 +22,7 @@
     }
   },
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "src/background/service-worker.js"
   },
   "content_scripts": [
     {
@@ -30,7 +30,7 @@
         "https://aistudio.google.com/*"
       ],
       "js": [
-        "interceptor.js"
+        "src/content/interceptor.js"
       ],
       "world": "MAIN",
       "run_at": "document_start"
@@ -40,16 +40,16 @@
         "https://aistudio.google.com/*"
       ],
       "js": [
-        "content.js"
+        "src/content/content.js"
       ],
       "css": [
-        "content.css"
+        "src/content/content.css"
       ],
       "run_at": "document_idle"
     }
   ],
   "action": {
-    "default_popup": "popup.html",
+    "default_popup": "src/popup/popup.html",
     "default_icon": {
       "16": "icons/icon16.png",
       "32": "icons/icon32.png",
