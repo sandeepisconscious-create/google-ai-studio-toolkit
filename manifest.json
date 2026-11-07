@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Google AI Studio Toolkit",
-  "version": "1.9.5",
+  "version": "1.9.6",
   "description": "Productivity toolkit for Google AI Studio: Applet capture, in-prompt model switching, hide suggestions, Enter to Send toggle, and dynamic model discovery.",
   "permissions": [
     "activeTab",
@@ -12,15 +12,6 @@
     "<all_urls>",
     "https://aistudio.google.com/*"
   ],
-  "commands": {
-    "capture_applet": {
-      "suggested_key": {
-        "default": "Alt+S",
-        "mac": "Alt+S"
-      },
-      "description": "Capture live applet preview and attach to prompt"
-    }
-  },
   "background": {
     "service_worker": "src/background/service-worker.js"
   },

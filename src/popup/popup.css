@@ -42,6 +42,46 @@ body {
   color: #ffffff;
 }
 
+.popup-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Monochromatic Gear Settings Button */
+.gear-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: #9aa0a6;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.15s ease;
+}
+
+.gear-btn:hover {
+  background-color: #282a2c;
+  border-color: #3c4043;
+  color: #ffffff;
+}
+
+.gear-btn.active {
+  background-color: #2b2c2f;
+  border-color: #5f6368;
+  color: #ffffff;
+}
+
+.gear-svg {
+  width: 15px;
+  height: 15px;
+  fill: currentColor;
+}
+
 .status-pill {
   font-size: 10px;
   padding: 2px 8px;
@@ -57,6 +97,56 @@ body {
   border-color: #5f6368;
 }
 
+/* Update Banner */
+.update-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #1e2638;
+  border: 1px solid #3b82f6;
+  border-radius: 8px;
+  padding: 8px 10px;
+  gap: 8px;
+  animation: fadeIn 0.15s ease-out;
+}
+
+.update-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.update-badge {
+  font-size: 9px;
+  font-weight: 700;
+  color: #60a5fa;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.update-version {
+  font-size: 11px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.update-btn {
+  background-color: #2563eb;
+  color: #ffffff;
+  padding: 4px 9px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color 0.15s ease;
+  white-space: nowrap;
+}
+
+.update-btn:hover {
+  background-color: #1d4ed8;
+}
+
+/* Info Card */
 .info-card {
   display: flex;
   flex-direction: column;
@@ -96,12 +186,74 @@ kbd {
   color: #e3e3e3;
 }
 
+/* Open Settings Button in Active View */
+.open-settings-row-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: 8px;
+  padding: 8px 12px;
+  background-color: #202123;
+  border: 1px solid #3c4043;
+  border-radius: 8px;
+  color: #c4c7c5;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.open-settings-row-btn:hover {
+  background-color: #282a2c;
+  border-color: #5f6368;
+  color: #ffffff;
+}
+
 /* Preferences / Settings Card */
 .settings-card {
   background-color: #202123;
   border: 1px solid #3c4043;
   border-radius: 8px;
   padding: 10px 12px;
+}
+
+.settings-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #2b2c2e;
+}
+
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: none;
+  color: #9aa0a6;
+  font-size: 11px;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-family: inherit;
+  transition: all 0.15s ease;
+}
+
+.back-btn:hover {
+  background-color: #282a2c;
+  color: #ffffff;
+}
+
+.settings-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .toggle-row {
@@ -185,6 +337,34 @@ input:checked + .slider:before {
   background-color: #ffffff;
 }
 
+/* Update Check Row */
+.update-check-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.check-update-btn {
+  padding: 4px 10px;
+  background-color: #282a2c;
+  border: 1px solid #3c4043;
+  color: #e3e3e3;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+  flex-shrink: 0;
+}
+
+.check-update-btn:hover {
+  background-color: #37393d;
+  border-color: #5f6368;
+  color: #ffffff;
+}
+
 /* Inactive Card Styling */
 .inactive-card {
   display: flex;
@@ -237,4 +417,9 @@ input:checked + .slider:before {
 .open-studio-btn:hover {
   background-color: #37393d;
   border-color: #5f6368;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
 }

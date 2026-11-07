@@ -981,11 +981,26 @@
     }
   }, true);
 
-  // Keyboard Shortcut: Option + S / Alt + S
+  // --- Standardized Fixed Keyboard Shortcuts ---
+
+  // Shortcut: Option + S / Alt + S -> Capture Applet Screenshot
   window.addEventListener('keydown', (e) => {
     if (e.altKey && (e.key === 's' || e.key === 'S' || e.code === 'KeyS')) {
       e.preventDefault();
       captureAppletScreenshot();
+    }
+  });
+
+  // Shortcut: Option + M / Alt + M -> Toggle Model Switcher Menu
+  window.addEventListener('keydown', (e) => {
+    if (e.altKey && (e.key === 'm' || e.key === 'M' || e.code === 'KeyM')) {
+      e.preventDefault();
+      const menu = document.getElementById('asc-model-dropdown-menu');
+      if (menu) {
+        scanNativeSettingsForModels();
+        renderModelMenuItems(menu);
+        menu.classList.toggle('asc-show');
+      }
     }
   });
 

@@ -5,8 +5,8 @@
 <h1 align="center">Google AI Studio Toolkit</h1>
 
 <p align="center">
-  <a href="https://github.com/sandeepisconscious-create/google-ai-studio-toolkit/releases/download/v1.9.5/google-ai-studio-toolkit-v1.9.5.zip">
-    <img src="https://img.shields.io/badge/⬇%EF%B8%8F_Download_Extension_(v1.9.5)-ZIP-2563EB?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Download Extension ZIP">
+  <a href="https://github.com/sandeepisconscious-create/google-ai-studio-toolkit/releases/download/v1.9.6/google-ai-studio-toolkit-v1.9.6.zip">
+    <img src="https://img.shields.io/badge/⬇%EF%B8%8F_Download_Extension_(v1.9.6)-ZIP-2563EB?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Download Extension ZIP">
   </a>
 </p>
 
@@ -68,7 +68,12 @@
 - **Extension Settings**: Easily toggle on/off from the extension toolbar popup without cluttering the in-prompt model switcher.
 - **Safe Defaults**: Defaults to Google AI Studio's standard multiline behavior until you choose to enable it.
 
-### 6. 🎨 Monochromatic & Native Interface
+### 6. ⚙️ Scoped Settings & GitHub Auto-Update Alerts
+- **Clean Gear Settings View**: Toggles ("Hide Suggestions" and "Enter to Send") are cleanly nested inside a dedicated settings gear (`⚙️`) view in the popup.
+- **Domain-Scoped**: Settings and controls **only** appear when you are actively on Google AI Studio (`aistudio.google.com`). On all other websites, the extension displays a minimal standby card without leaking irrelevant AI Studio controls.
+- **GitHub Release Checker & Badge Alert**: Automatically queries GitHub for newly published releases and alerts you with a toolbar badge (`NEW`) and a one-click download banner whenever an update is available.
+
+### 7. 🎨 Monochromatic & Native Interface
 - Styled with dark monochromatic tones (`#18191a`, `#282a2c`, `#3c4043`) that seamlessly blend with Google AI Studio's native UI.
 - Zero intrusive pop-overs, floating toasts, or layout shifts over your prompt box.
 
@@ -79,8 +84,8 @@
 Anyone can install and run this extension locally in Google Chrome, Brave, Edge, or any Chromium browser.
 
 ### Option A: Direct Download ZIP (Recommended)
-1. Click the **[⬇️ Download Extension ZIP](https://github.com/sandeepisconscious-create/google-ai-studio-toolkit/releases/download/v1.9.5/google-ai-studio-toolkit-v1.9.5.zip)** button.
-2. Unzip `google-ai-studio-toolkit-v1.9.5.zip` to a folder on your computer.
+1. Click the **[⬇️ Download Extension ZIP](https://github.com/sandeepisconscious-create/google-ai-studio-toolkit/releases/download/v1.9.6/google-ai-studio-toolkit-v1.9.6.zip)** button.
+2. Unzip `google-ai-studio-toolkit-v1.9.6.zip` to a folder on your computer.
 
 ### Option B: Clone with Git
 ```bash
@@ -99,18 +104,15 @@ git clone https://github.com/sandeepisconscious-create/google-ai-studio-toolkit.
 
 ---
 
-## ⌨️ Shortcuts & Controls
+## ⌨️ Standardized Shortcuts & Controls
 
 | Shortcut / Action | Behavior |
 | :--- | :--- |
-| <kbd>Option</kbd> + <kbd>S</kbd> *(macOS)* | Capture applet preview & attach to prompt |
-| <kbd>Alt</kbd> + <kbd>S</kbd> *(Windows / Linux)* | Capture applet preview & attach to prompt |
-| <kbd>Enter</kbd> *(when Enter to Send is ON)* | Send prompt immediately |
-| <kbd>Shift</kbd> + <kbd>Enter</kbd> *(when Enter to Send is ON)* | Insert new line in prompt |
-| <kbd>Enter</kbd> *(when Enter to Send is OFF)* | Insert new line (Google AI Studio default) |
-
-> [!TIP]
-> You can customize the capture shortcut anytime by opening `chrome://extensions/shortcuts` in your browser.
+| <kbd>Option</kbd> + <kbd>S</kbd> *(macOS)* / <kbd>Alt</kbd> + <kbd>S</kbd> *(Windows / Linux)* | Capture applet preview & attach chip to prompt |
+| <kbd>Option</kbd> + <kbd>M</kbd> *(macOS)* / <kbd>Alt</kbd> + <kbd>M</kbd> *(Windows / Linux)* | Open / close in-prompt model switcher dropdown |
+| <kbd>Enter</kbd> *(when Enter to Send is enabled in Settings)* | Send prompt immediately |
+| <kbd>Shift</kbd> + <kbd>Enter</kbd> *(when Enter to Send is enabled)* | Insert new line in prompt |
+| <kbd>Enter</kbd> *(when Enter to Send is disabled)* | Insert new line (Google AI Studio default) |
 
 ---
 
@@ -122,15 +124,15 @@ google-ai-studio-toolkit/
 ├── icons/                         # Extension icons (16px, 32px, 48px, 128px, logo)
 ├── src/
 │   ├── background/
-│   │   └── service-worker.js      # Background tab capture & shortcut command handler
+│   │   └── service-worker.js      # Background tab capture & GitHub release auto-update checker
 │   ├── content/
 │   │   ├── content.js             # Injected UI (camera button, model switcher, Enter to Send)
 │   │   ├── content.css            # Clean monochromatic dark theme styling
 │   │   └── interceptor.js         # Main-world fetch/XHR interceptor & dynamic model discovery
 │   └── popup/
-│       ├── popup.html             # Extension toolbar popup interface
-│       ├── popup.css              # Popup styles & toggle switch
-│       └── popup.js               # Popup controller & preference sync
+│       ├── popup.html             # Toolbar popup interface & scoped settings view
+│       ├── popup.css              # Monochromatic styling & gear settings transition
+│       └── popup.js               # Popup controller, scoped view routing & release updater
 ├── LICENSE                        # MIT License
 └── README.md                      # Documentation
 ```
