@@ -22,19 +22,20 @@
 
   // --- 2. Registry & Baseline Fallback Models ---
 
-  const CURRENT_CACHE_VERSION = 'v1.6.4';
+  const CURRENT_CACHE_VERSION = 'v1.9.8';
 
   const BASELINE_MODELS = [
-    { key: 'gemini-4-argon', name: 'Gemini 4 Argon', shortName: 'Gemini 4 Argon' },
-    { key: 'gemini-3.8-flash', name: 'Gemini 3.8 Flash', shortName: 'Gemini 3.8 Flash' },
-    { key: 'gemini-3.6-flash', name: 'Gemini 3.6 Flash', shortName: 'Gemini 3.6 Flash' },
-    { key: 'gemini-3.5-flash-lite', name: 'Gemini 3.5 Flash Lite', shortName: 'Gemini 3.5 Flash Lite' },
-    { key: 'gemini-3.1-flash-lite', name: 'Gemini 3.1 Flash Lite', shortName: 'Gemini 3.1 Flash Lite' },
-    { key: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview', shortName: 'Gemini 3 Flash Preview' }
+    { key: 'gemini-4-hydrogen', name: 'Gemini 4 Hydrogen', shortName: 'Gemini 4 Hydrogen', badge: 'New' },
+    { key: 'gemini-4-carbon', name: 'Gemini 4 Carbon', shortName: 'Gemini 4 Carbon', badge: 'Paid' },
+    { key: 'gemini-4-argon', name: 'Gemini 4 Argon', shortName: 'Gemini 4 Argon', badge: '' },
+    { key: 'gemini-3.5-flash-lite', name: 'Gemini 3.5 Flash Lite', shortName: 'Gemini 3.5 Flash Lite', badge: '' },
+    { key: 'gemini-flash-latest', name: 'Gemini Flash Latest', shortName: 'Gemini Flash Latest', badge: '' },
+    { key: 'gemini-flash-lite-latest', name: 'Gemini Flash-Lite Latest', shortName: 'Gemini Flash-Lite Latest', badge: '' }
   ];
 
   let currentModels = [...BASELINE_MODELS];
-  let activeModel = 'Gemini 3.8 Flash';
+  let activeModel = 'Gemini 4 Hydrogen';
+  let hasInitialDiscovered = false;
   let isCapturing = false;
   let enterToSendEnabled = false;
   let hideSuggestionsEnabled = true;
@@ -98,20 +99,28 @@
   // --- 4. Dynamic Model Discovery & Normalization ---
 
   /**
-   * Normalizes a model entry and eliminates aliases or UI badges
+   * Normalizes a model entry and extracts or strips UI badges
    * @param {string|object} raw
-   * @returns {{key: string, name: string, shortName: string}|null}
+   * @returns {{key: string, name: string, shortName: string, badge: string}|null}
    */
   function normalizeModelEntry(raw) {
     if (!raw) return null;
     let name = typeof raw === 'string' ? raw : (raw.displayName || raw.name || '');
+    const rawId = (typeof raw === 'object' && raw.id) ? String(raw.id).replace(/^models\//, '').trim() : '';
+    let badge = (typeof raw === 'object' && raw.badge) ? String(raw.badge).trim() : '';
+
     name = name.replace(/^models\//, '').trim();
     if (!name || name.length < 2) return null;
 
     if (/^(Select|Cancel|Done|Settings|Apply|Close|Auto)$/i.test(name)) return null;
 
-    // Filter out unversioned floating aliases like "Gemini Flash Latest"
-    if (/\blatest\b/i.test(name) && !/\d+(\.\d+)?/.test(name)) return null;
+    // Extract badge before unwrapping or stripping if not explicitly provided
+    if (!badge) {
+      if (/(?:[•·]\s*|\b|\()new(?:\)|\b|$)/i.test(name)) badge = 'New';
+      else if (/(?:[•·]\s*|\b|\()paid(?:\)|\b|$)/i.test(name)) badge = 'Paid';
+      else if (/(?:[•·]\s*|\b|\()preview(?:\)|\b|$)/i.test(name)) badge = 'Preview';
+      else if (/(?:[•·]\s*|\b|\()beta(?:\)|\b|$)/i.test(name)) badge = 'Beta';
+    }
 
     // Unwrap "Default (Gemini ...)"
     const defaultMatch = name.match(/Default\s*\(([^)]+)\)/i);
@@ -119,37 +128,72 @@
       name = defaultMatch[1].trim();
     }
 
-    // Strip UI badge text like "Paid", "Free", "Beta", "(Paid)", "(Preview)"
-    name = name.replace(/Paid$/i, '')
-               .replace(/\s*\((paid|preview|default|beta|new)\)/gi, '')
+    // Strip UI badge text like "• New", "• Paid", "Paid", "New", "Free", "Beta", "(Paid)", "(Preview)"
+    name = name.replace(/[•·]\s*(paid|new|free|beta|preview|default)\b/gi, '')
+               .replace(/\s*\((paid|preview|default|beta|new|free)\)/gi, '')
+               .replace(/\s+\b(paid|new|free|beta)\s*$/i, '')
+               .replace(/(paid|new|free|beta)$/i, (match, p1, offset, str) => {
+                 // Only strip if attached at the end after a known model word or whitespace
+                 const before = str.slice(0, offset);
+                 if (/\s$/.test(before) || /(hydrogen|carbon|argon|helium|neon|krypton|xenon|radon|flash|pro|lite|ultra|latest|\d)$/i.test(before)) {
+                   return '';
+                 }
+                 return match;
+               })
+               .replace(/[•·]/g, ' ')
                .replace(/\s+/g, ' ')
                .trim();
 
     if (!name || !/gemini/i.test(name)) return null;
 
+    // Convert raw API slug (e.g. "gemini-4-hydrogen") into Title Case display name if needed
+    if (/^gemini-[a-z0-9\.\-]+$/i.test(name) && !name.includes(' ')) {
+      name = name
+        .split('-')
+        .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(' ')
+        .replace(/Flash Lite\s+Latest/i, 'Flash-Lite Latest');
+    }
+
     // Generate canonical semantic key
-    const key = name.toLowerCase()
-                    .replace(/[^a-z0-9\.]+/g, '-')
-                    .replace(/^-|-$/g, '');
+    const key = (rawId && /^gemini-[a-z0-9\.\-]+$/i.test(rawId))
+      ? rawId.toLowerCase()
+      : name.toLowerCase()
+            .replace(/[^a-z0-9\.]+/g, '-')
+            .replace(/^-|-$/g, '');
 
     return {
       key,
       name,
-      shortName: name
+      shortName: name,
+      badge
     };
+  }
+
+  function getModelRank(m) {
+    const n = m.name.toLowerCase();
+    const verMatch = n.match(/\d+(\.\d+)?/);
+    const ver = verMatch ? parseFloat(verMatch[0]) : 0; // Unversioned "Latest" aliases sort at bottom (ver = 0)
+
+    // Tier priority within same version generation
+    let tier = 50;
+    if (n.includes('hydrogen')) tier = 100;
+    else if (n.includes('carbon')) tier = 95;
+    else if (n.includes('ultra')) tier = 90;
+    else if (n.includes('argon') || n.includes('pro')) tier = 85;
+    else if (n.includes('neon') || n.includes('krypton') || n.includes('xenon')) tier = 80;
+    else if (n.includes('flash') && !n.includes('lite')) tier = 70;
+    else if (n.includes('lite')) tier = 60;
+
+    return { ver, tier };
   }
 
   function sortModelsList() {
     currentModels.sort((a, b) => {
-      const aVer = parseFloat((a.name.match(/\d+(\.\d+)?/) || [0])[0]);
-      const bVer = parseFloat((b.name.match(/\d+(\.\d+)?/) || [0])[0]);
-      if (bVer !== aVer) return bVer - aVer;
-
-      const aPro = /argon|pro|ultra/i.test(a.name);
-      const bPro = /argon|pro|ultra/i.test(b.name);
-      if (aPro && !bPro) return -1;
-      if (!aPro && bPro) return 1;
-
+      const rA = getModelRank(a);
+      const rB = getModelRank(b);
+      if (rB.ver !== rA.ver) return rB.ver - rA.ver;
+      if (rB.tier !== rA.tier) return rB.tier - rA.tier;
       return a.name.localeCompare(b.name);
     });
   }
@@ -165,28 +209,59 @@
     } catch (e) {}
   }
 
-  function mergeDiscoveredModels(modelsList) {
+  function mergeDiscoveredModels(modelsList, replaceExisting = false) {
     if (!Array.isArray(modelsList) || modelsList.length === 0) return;
 
-    let hasChange = false;
+    const normalizedList = [];
+    const seenKeys = new Set();
+
     for (const raw of modelsList) {
       const entry = normalizeModelEntry(raw);
-      if (!entry) continue;
+      if (!entry || seenKeys.has(entry.key)) continue;
+      seenKeys.add(entry.key);
+      normalizedList.push(entry);
+    }
 
-      const existing = currentModels.find(m =>
-        m.key === entry.key ||
-        m.name.toLowerCase() === entry.name.toLowerCase()
-      );
+    if (normalizedList.length === 0) return;
 
-      if (!existing) {
-        currentModels.push(entry);
-        hasChange = true;
+    let hasChange = false;
+
+    if (replaceExisting && normalizedList.length >= 2) {
+      const prevKeys = currentModels.map(m => `${m.key}:${m.badge || ''}`).join(',');
+      currentModels = normalizedList;
+      sortModelsList();
+      const nextKeys = currentModels.map(m => `${m.key}:${m.badge || ''}`).join(',');
+      hasChange = prevKeys !== nextKeys;
+    } else {
+      for (const entry of normalizedList) {
+        const existing = currentModels.find(m =>
+          m.key === entry.key ||
+          m.name.toLowerCase() === entry.name.toLowerCase()
+        );
+
+        if (!existing) {
+          currentModels.push(entry);
+          hasChange = true;
+        } else if (entry.badge && !existing.badge) {
+          existing.badge = entry.badge;
+          hasChange = true;
+        }
+      }
+      if (hasChange) {
+        sortModelsList();
       }
     }
 
     if (hasChange) {
-      sortModelsList();
       saveDynamicModels();
+
+      // If activeModel is no longer in the discovered list and wasn't explicitly set to a valid model, default to top model
+      const activeExists = currentModels.some(
+        m => m.name.toLowerCase() === activeModel.toLowerCase() || m.key === activeModel.toLowerCase()
+      );
+      if (!activeExists && currentModels.length > 0) {
+        activeModel = currentModels[0].name;
+      }
 
       const menu = document.getElementById('asc-model-dropdown-menu');
       if (menu) renderModelMenuItems(menu);
@@ -194,43 +269,135 @@
     }
   }
 
-  // Tier 1: DOM Reader from Native Chat Settings
+  function extractTextWithSpacing(el) {
+    if (!el) return '';
+    // Clone or walk child nodes so adjacent badge spans don't concatenate without spaces
+    const parts = [];
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null);
+    let node;
+    while ((node = walker.nextNode())) {
+      const val = (node.nodeValue || '').trim();
+      if (val) parts.push(val);
+    }
+    return parts.join(' ').trim();
+  }
+
+  function collectOptionsFromRoot(root) {
+    const found = [];
+    if (!root) return found;
+
+    const selects = root.querySelectorAll('select');
+    for (const select of selects) {
+      if (select.options?.length > 0) {
+        for (const opt of select.options) {
+          const t = (opt.text || opt.value || '').trim();
+          if (t && /gemini/i.test(t)) found.push({ name: t });
+        }
+      }
+    }
+
+    const options = root.querySelectorAll('[role="option"], mat-option, [role="menuitem"], [role="menuitemradio"], .mat-mdc-option, .mdc-list-item');
+    for (const opt of options) {
+      if (opt.closest('#asc-model-pill-wrap')) continue;
+      const t = extractTextWithSpacing(opt) || (opt.textContent || '').trim();
+      if (t && /gemini/i.test(t)) {
+        found.push({ name: t });
+      }
+    }
+
+    return found;
+  }
+
+  // Tier 1: DOM Reader from Native Chat Settings & Overlay Containers
   function scanNativeSettingsForModels() {
+    const discovered = [];
+
+    // 1. Check near "Select model to use in Chat" label
     const allLabels = Array.from(document.querySelectorAll('*')).filter(el => {
       return el.children.length === 0 && (el.textContent || '').trim().includes('Select model to use in Chat');
     });
 
     for (const label of allLabels) {
-      const container = label.parentElement;
+      const container = label.closest('div, section, aside, form') || label.parentElement;
       if (!container) continue;
 
-      const select = container.querySelector('select');
-      if (select?.options?.length > 0) {
-        const found = [];
-        for (const opt of select.options) {
-          const t = (opt.text || opt.value || '').trim();
-          if (t) found.push({ name: t });
+      // Also check currently selected value shown on the combobox/trigger button
+      const trigger = container.querySelector('button, [role="combobox"], [role="listbox"], mat-select') || label.nextElementSibling;
+      if (trigger) {
+        const triggerText = extractTextWithSpacing(trigger) || (trigger.textContent || '').trim();
+        if (triggerText && /gemini/i.test(triggerText)) {
+          discovered.push({ name: triggerText });
         }
-        if (found.length > 0) mergeDiscoveredModels(found);
       }
 
-      const options = container.querySelectorAll('[role="option"], mat-option');
-      if (options.length > 0) {
-        const found = [];
-        for (const opt of options) {
-          const t = (opt.textContent || '').trim();
-          if (t) found.push({ name: t });
-        }
-        if (found.length > 0) mergeDiscoveredModels(found);
-      }
+      discovered.push(...collectOptionsFromRoot(container));
     }
+
+    // 2. Check global CDK / Material overlay containers (where Angular Material renders open dropdowns!)
+    const overlayRoots = document.querySelectorAll(
+      '.cdk-overlay-container, .cdk-overlay-pane, [role="listbox"], .mat-mdc-select-panel, .mat-select-panel'
+    );
+    const overlayModels = [];
+    for (const root of overlayRoots) {
+      overlayModels.push(...collectOptionsFromRoot(root));
+    }
+
+    if (overlayModels.length >= 2) {
+      // Complete list from an open native model dropdown! Replace stale models with the live list
+      mergeDiscoveredModels(overlayModels, true);
+      hasInitialDiscovered = true;
+      return true;
+    }
+
+    if (discovered.length > 0) {
+      mergeDiscoveredModels(discovered, false);
+    }
+    return false;
+  }
+
+  // Proactive background probe to discover models from Native Chat Settings when needed
+  let isProbingModels = false;
+  function probeNativeModelsIfNeeded(onComplete) {
+    if (isProbingModels) {
+      if (onComplete) onComplete();
+      return;
+    }
+
+    // First try passive scan
+    if (scanNativeSettingsForModels()) {
+      if (onComplete) onComplete();
+      return;
+    }
+
+    const existingLabel = findLabelInDOM('Select model to use in Chat');
+    if (existingLabel) {
+      isProbingModels = true;
+      const container = existingLabel.closest('div, section') || existingLabel.parentElement;
+      const dropdown = container && (container.querySelector('button, [role="combobox"], [role="listbox"], mat-select') || existingLabel.nextElementSibling);
+      if (dropdown) {
+        dropdown.click();
+        setTimeout(() => {
+          scanNativeSettingsForModels();
+          // Close the dropdown overlay cleanly
+          document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true }));
+          const backdrop = document.querySelector('.cdk-overlay-backdrop');
+          if (backdrop) backdrop.click();
+          isProbingModels = false;
+          if (onComplete) onComplete();
+        }, 120);
+        return;
+      }
+      isProbingModels = false;
+    }
+
+    if (onComplete) onComplete();
   }
 
   // Tier 2: Network Interceptor message listener
   window.addEventListener('message', (event) => {
     if (!isContextValid() || event.source !== window || !event.data) return;
     if (event.data.type === 'ASC_MODELS_DISCOVERED' && Array.isArray(event.data.models)) {
-      mergeDiscoveredModels(event.data.models);
+      mergeDiscoveredModels(event.data.models, false);
     }
   });
 
@@ -292,9 +459,12 @@
         const normalizedSaved = normalizeModelEntry(rawSaved);
 
         if (normalizedSaved && !normalizedSaved.name.toLowerCase().startsWith('auto')) {
-          activeModel = normalizedSaved.name;
+          const isValidSaved = currentModels.some(
+            m => m.key === normalizedSaved.key || m.name.toLowerCase() === normalizedSaved.name.toLowerCase()
+          );
+          activeModel = isValidSaved ? normalizedSaved.name : (currentModels[0]?.name || 'Gemini 4 Hydrogen');
         } else {
-          activeModel = 'Gemini 3.8 Flash';
+          activeModel = currentModels[0]?.name || 'Gemini 4 Hydrogen';
         }
 
         updatePillLabel();
@@ -454,29 +624,38 @@
     dropdown.click();
 
     setTimeout(() => {
+      // While the native dropdown is open, capture all available options!
+      scanNativeSettingsForModels();
+
       const allOpts = Array.from(document.querySelectorAll('[role="option"], mat-option, li'));
+      const targetEntry = normalizeModelEntry(targetModelName);
+      const targetKey = targetEntry ? targetEntry.key : targetModelName.toLowerCase();
       let matchedOpt = null;
+      let nonDefaultMatch = null;
 
       for (const opt of allOpts) {
         if (opt.closest('#asc-model-pill-wrap')) continue;
-        const text = (opt.textContent || '').trim().toLowerCase();
-        if (text.includes(targetModelName.toLowerCase())) {
-          matchedOpt = opt;
-          break;
+        const rawText = extractTextWithSpacing(opt) || (opt.textContent || '').trim();
+        const optEntry = normalizeModelEntry(rawText);
+
+        if (optEntry && (optEntry.key === targetKey || optEntry.name.toLowerCase() === targetModelName.toLowerCase())) {
+          if (!/^default\b/i.test(rawText)) {
+            nonDefaultMatch = opt;
+            break;
+          }
+          if (!matchedOpt) matchedOpt = opt;
         }
       }
 
+      if (nonDefaultMatch) {
+        matchedOpt = nonDefaultMatch;
+      }
+
       if (!matchedOpt) {
-        const key = targetModelName.toLowerCase();
         for (const opt of allOpts) {
           if (opt.closest('#asc-model-pill-wrap')) continue;
-          const text = (opt.textContent || '').trim().toLowerCase();
-          if ((key.includes('3.8') && text.includes('3.8')) ||
-              (key.includes('argon') && text.includes('argon')) ||
-              (key.includes('3.6') && text.includes('3.6')) ||
-              (key.includes('3.5') && text.includes('3.5')) ||
-              (key.includes('3.1') && text.includes('3.1')) ||
-              (key.includes('preview') && text.includes('preview'))) {
+          const text = (extractTextWithSpacing(opt) || opt.textContent || '').trim().toLowerCase();
+          if (text.includes(targetModelName.toLowerCase())) {
             matchedOpt = opt;
             break;
           }
@@ -758,7 +937,14 @@
     pillBtn.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
-      scanNativeSettingsForModels();
+      const willShow = !menu.classList.contains('asc-show');
+      if (willShow && !hasInitialDiscovered) {
+        probeNativeModelsIfNeeded(() => {
+          renderModelMenuItems(menu);
+        });
+      } else {
+        scanNativeSettingsForModels();
+      }
       renderModelMenuItems(menu);
       menu.classList.toggle('asc-show');
     });
@@ -791,9 +977,14 @@
                        m.shortName.toLowerCase() === activeModel.toLowerCase();
       item.className = `asc-model-menu-item ${isActive ? 'active' : ''}`;
 
+      const badgeHtml = m.badge
+        ? `<span class="asc-model-badge asc-badge-${escapeHtml(m.badge.toLowerCase())}">• ${escapeHtml(m.badge)}</span>`
+        : '';
+
       item.innerHTML = `
         <div class="asc-model-name-group">
           <span>${escapeHtml(m.name)}</span>
+          ${badgeHtml}
         </div>
         ${isActive ? '<span class="asc-check">✓</span>' : ''}
       `;
@@ -1069,7 +1260,14 @@
       e.preventDefault();
       const menu = document.getElementById('asc-model-dropdown-menu');
       if (menu) {
-        scanNativeSettingsForModels();
+        const willShow = !menu.classList.contains('asc-show');
+        if (willShow && !hasInitialDiscovered) {
+          probeNativeModelsIfNeeded(() => {
+            renderModelMenuItems(menu);
+          });
+        } else {
+          scanNativeSettingsForModels();
+        }
         renderModelMenuItems(menu);
         menu.classList.toggle('asc-show');
       }
@@ -1187,6 +1385,7 @@
       rafDebounce = null;
       if (teardownIfInvalid()) return;
       setupPromptBar();
+      scanNativeSettingsForModels();
       scanAndHideSuggestions();
     });
   });
@@ -1199,6 +1398,7 @@
   pollInterval = setInterval(() => {
     if (teardownIfInvalid()) return;
     setupPromptBar();
+    scanNativeSettingsForModels();
     scanAndHideSuggestions();
   }, 1000);
 
